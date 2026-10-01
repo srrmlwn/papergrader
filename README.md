@@ -15,5 +15,6 @@ notes written into the page's own white space, and a grade.
 2. Set environment variables in the Vercel project:
    - `APP_PASSCODE`: the passcode people type to use the app
    - `ANTHROPIC_API_KEY`: your Anthropic API key (server-side only)
+   - optional `ANTHROPIC_WORKSPACE_ID`: only if your API key isn't scoped to a workspace
    - optional `GRADER_MODEL` (default `claude-sonnet-5-5`)
 3. Redeploy so the variables take effect.

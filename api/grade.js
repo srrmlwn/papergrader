@@ -118,6 +118,8 @@ export default async function handler(req, res) {
         "content-type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
+        // only needed for keys that aren't scoped to a single workspace
+        ...(process.env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID.trim() } : {}),
       },
       body: JSON.stringify({
         model: MODEL,
@@ -135,7 +137,8 @@ export default async function handler(req, res) {
   if (!r.ok) {
     console.error("anthropic error", r.status, JSON.stringify(data).slice(0, 500));
     const msg = r.status === 429 ? "The grader is busy right now. Try again in a minute."
-      : r.status === 401 ? "The grader's API key was rejected. The app owner needs to check it."
+      : r.status === 401 || r.status === 403 ? "The grader's API key was rejected. The app owner needs to check it."
+      : r.status === 400 && /workspace/i.test(JSON.stringify(data)) ? "The grader's API key needs a workspace. The app owner needs to set ANTHROPIC_WORKSPACE_ID or use a workspace key."
       : "The grader returned an error. Try again.";
     return send(res, 502, { error: msg });
   }
