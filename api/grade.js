@@ -1,6 +1,12 @@
 import { passcodeOk, readJson, send } from "./_lib.js";
 
 const MODEL = process.env.GRADER_MODEL || "claude-sonnet-5-5";
+// US$ per million tokens [input, output], from Anthropic's model pricing page (Sep 2026).
+const PRICES = {
+  "claude-sonnet-5-5": [2, 10],
+  "claude-opus-5-5": [4, 20],
+  "claude-haiku-4-5-20251001": [1, 5],
+};
 const MAX_PAGES = 8;
 const MAX_CHARS = 50000;
 
@@ -109,6 +115,7 @@ export default async function handler(req, res) {
 
   const user = `File name: ${String(body.name || "document").slice(0, 80)}\n\n<document>\n${doc}\n</document>\n\nGrade this document.`;
 
+  const started = Date.now();
   let r;
   try {
     r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -149,5 +156,13 @@ export default async function handler(req, res) {
   }
   result.pagesGraded = pages.length;
   result.usage = data.usage ? { input: data.usage.input_tokens, output: data.usage.output_tokens } : null;
+  // One line per grade for cost spot checks: counts only, never document text.
+  const [pin, pout] = PRICES[MODEL] || [0, 0];
+  const inTok = data.usage?.input_tokens || 0, outTok = data.usage?.output_tokens || 0;
+  console.log("grade-cost " + JSON.stringify({
+    model: MODEL, pages: pages.length, chars: total, inTok, outTok,
+    usd: Math.round(((inTok * pin + outTok * pout) / 1e6) * 10000) / 10000,
+    ms: Date.now() - started, comments: (result.issues || []).length,
+  }));
   return send(res, 200, result);
 }
