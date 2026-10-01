@@ -1,4 +1,4 @@
-import { readFile, pageText, MAX_PAGES } from "./readers.js";
+import { readFile, readText, pageText, MAX_PAGES } from "./readers.js";
 import { markPage } from "./ink.js";
 
 const JSPDF = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
@@ -33,10 +33,34 @@ $("gate-form").addEventListener("submit", async (e) => {
   } catch (err) { $("gate-error").textContent = err.message; $("gate-error").hidden = false; }
 });
 
-// ---------- file choice ----------
+// ---------- input choice: a file or pasted text (whichever was used last) ----------
+const URL_ONLY = /^\s*https?:\/\/\S+\s*$/i;
+function refreshSubmit() {
+  const text = $("paste").value.trim();
+  $("submit").disabled = !(chosen || text);
+}
+function clearFile() {
+  chosen = null; $("file").value = "";
+  $("tray").classList.remove("has-file");
+  $("tray-title").textContent = "Turn in your paper";
+  $("tray-hint").textContent = "Tap to choose a PDF, Word file or image, or drop it here. Up to 8 pages.";
+}
+$("paste").addEventListener("input", () => {
+  const v = $("paste").value;
+  if (v.trim() && chosen) clearFile();
+  $("paste").classList.remove("dimmed");
+  const words = (v.match(/\S+/g) || []).length;
+  $("paste-meta").hidden = !words;
+  $("paste-meta").textContent = URL_ONLY.test(v)
+    ? "Links aren't supported yet. Paste the text of the page instead."
+    : `${words.toLocaleString()} ${words === 1 ? "word" : "words"}`;
+  $("upload-error").hidden = true;
+  refreshSubmit();
+});
 function pick(file) {
   if (!file) return;
   chosen = file;
+  if ($("paste").value.trim()) $("paste").classList.add("dimmed");
   $("tray").classList.add("has-file");
   $("tray-title").textContent = file.name;
   $("tray-hint").textContent = `${(file.size / 1024 / 1024).toFixed(1)} MB. Tap to choose a different file.`;
@@ -52,21 +76,27 @@ tray.addEventListener("drop", (e) => pick(e.dataTransfer.files[0]));
 // ---------- grading ----------
 $("upload-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!chosen) return;
+  const pasted = chosen ? "" : $("paste").value;
+  if (!chosen && !pasted.trim()) return;
+  if (!chosen && URL_ONLY.test(pasted)) {
+    $("upload-error").textContent = "Links aren't supported yet. Open the page, copy its text, and paste that instead.";
+    $("upload-error").hidden = false; return;
+  }
+  const name = chosen ? chosen.name : "Pasted text";
   const tone = new FormData(e.target).get("tone") || "fair";
-  $("working-name").textContent = chosen.name;
+  $("working-name").textContent = chosen ? chosen.name : "your writing";
   show("working");
   const status = (s) => { $("status").textContent = s; };
   try {
     await document.fonts.load('34px "Caveat"');
-    const doc = await readFile(chosen, status);
+    const doc = chosen ? await readFile(chosen, status) : await readText(pasted, status);
     const texts = doc.pages.map(p => pageText(p.words));
     if (!texts.join("").trim()) throw new Error("No readable text was found. If this is a photo, try a sharper, straighter shot.");
 
     status("Grading your paper");
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passcode, tone, name: chosen.name, pages: texts.map((text, i) => ({ page: i + 1, text })) }),
+      body: JSON.stringify({ passcode, tone, name, pages: texts.map((text, i) => ({ page: i + 1, text })) }),
     });
     const g = await r.json().catch(() => ({}));
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
@@ -74,7 +104,7 @@ $("upload-form").addEventListener("submit", async (e) => {
 
     status("Marking it up");
     const header = {
-      title: g.title || chosen.name.replace(/\.[^.]+$/, ""),
+      title: g.title || name.replace(/\.[^.]+$/, ""),
       grade: g.grade || "?", points: Math.max(0, g.points | 0),
       verdict: g.verdict || "", summary: g.summary || "",
     };
@@ -85,7 +115,7 @@ $("upload-form").addEventListener("submit", async (e) => {
       const out = await markPage(doc.pages[i], issues, { index: i, count: doc.pages.length, header });
       canvases.push(out.canvas); dropped += out.dropped.length; missing += out.missing.length;
     }
-    await showResult(canvases, header, { dropped, missing, total: doc.totalPages });
+    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated });
   } catch (err) {
     console.error(err);
     show("upload");
@@ -109,7 +139,8 @@ async function showResult(canvases, header, info) {
   });
   $("result-title").textContent = `${header.title}: ${header.grade}`;
   const notes = [];
-  if (info.total > MAX_PAGES) notes.push(`Only the first ${MAX_PAGES} of ${info.total} pages were graded.`);
+  if (info.truncated) notes.push(`Your writing ran past ${MAX_PAGES} pages; only the first ${MAX_PAGES} were graded.`);
+  else if (info.total > MAX_PAGES) notes.push(`Only the first ${MAX_PAGES} of ${info.total} pages were graded.`);
   if (info.dropped) notes.push(`${info.dropped} minor ${info.dropped === 1 ? "note was" : "notes were"} left off because the page ran out of room.`);
   if (info.missing) notes.push(`${info.missing} ${info.missing === 1 ? "comment" : "comments"} couldn't be matched to the text and ${info.missing === 1 ? "was" : "were"} skipped.`);
   $("result-notes").textContent = notes.join(" ");
@@ -168,10 +199,8 @@ $("share").addEventListener("click", async () => {
   } catch { /* user cancelled */ }
 });
 $("again").addEventListener("click", () => {
-  chosen = null; $("file").value = "";
-  $("tray").classList.remove("has-file");
-  $("tray-title").textContent = "Turn in your paper";
-  $("tray-hint").textContent = "Tap to choose a PDF or an image, or drop it here. Up to 8 pages.";
+  clearFile();
+  $("paste").value = ""; $("paste").classList.remove("dimmed"); $("paste-meta").hidden = true;
   $("submit").disabled = true;
   show("upload"); window.scrollTo({ top: 0 });
 });

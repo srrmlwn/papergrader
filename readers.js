@@ -1,9 +1,12 @@
 // readers.js: turn an uploaded file into page images + positioned words.
-// PDFs use their own text layer (exact positions); images and scanned PDFs use OCR.
+// PDFs use their own text layer (exact positions); images and scanned PDFs use OCR;
+// Word files and pasted text are typeset onto clean pages (typeset.js).
+import { typeset, blocksFromText, blocksFromHtml, loadTypesetFonts } from "./typeset.js";
 
 const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
 const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
 const TESSERACT = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+const MAMMOTH = "https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js";
 
 export const MAX_PAGES = 8;
 const PDF_SCALE = 200 / 72;         // ~200 dpi, matches the ink engine's sizes
@@ -27,11 +30,49 @@ function loadTesseract() {
   return tessP;
 }
 
+let mammothP = null;
+function loadMammoth() {
+  if (!mammothP) mammothP = new Promise((res, rej) => {
+    if (window.mammoth) return res(window.mammoth);
+    const s = document.createElement("script"); s.src = MAMMOTH; s.async = true;
+    s.onload = () => res(window.mammoth); s.onerror = () => rej(new Error("Couldn't load the Word reader."));
+    document.head.appendChild(s);
+  });
+  return mammothP;
+}
+
 export async function readFile(file, onStatus) {
   const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
   if (isPdf) return readPdf(file, onStatus);
+  if (/\.docx$/i.test(file.name) || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return readDocx(file, onStatus);
+  if (/\.doc$/i.test(file.name)) throw new Error("Older .doc files aren't supported. In Word, use Save As to make a .docx or a PDF, then upload that.");
+  if (/\.(txt|md)$/i.test(file.name) || file.type === "text/plain") return readText(await file.text(), onStatus);
   if (file.type.startsWith("image/") || /\.(png|jpe?g|webp|heic|gif)$/i.test(file.name)) return readImage(file, onStatus);
-  throw new Error("That file type isn't supported. Upload a PDF or an image (PNG, JPG, WebP).");
+  throw new Error("That file type isn't supported. Upload a PDF, a Word file (.docx), or an image (PNG, JPG, WebP).");
+}
+
+async function readDocx(file, onStatus) {
+  onStatus("Opening the Word file");
+  const mammoth = await loadMammoth();
+  let html;
+  try { ({ value: html } = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() })); }
+  catch { throw new Error("That Word file couldn't be read. Try saving it again, or export it as a PDF."); }
+  const blocks = blocksFromHtml(html);
+  if (!blocks.length) throw new Error("No text was found in that Word file.");
+  return layOut(blocks, onStatus);
+}
+
+export async function readText(text, onStatus) {
+  const blocks = blocksFromText(text);
+  if (!blocks.length) throw new Error("Paste some text to grade.");
+  return layOut(blocks, onStatus);
+}
+
+async function layOut(blocks, onStatus) {
+  onStatus("Setting it on the page");
+  await loadTypesetFonts();
+  const { pages, truncated } = typeset(blocks, MAX_PAGES);
+  return { pages, totalPages: pages.length, truncated };
 }
 
 async function readPdf(file, onStatus) {

@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23fff'/%3E%3Cpath d='M14 34c2-14 30-18 36-6s-10 22-24 18' fill='none' stroke='%23C4161C' stroke-width='5' stroke-linecap='round'/%3E%3Ctext x='21' y='41' font-family='Georgia' font-size='20' fill='%23C4161C'%3EA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -39,10 +39,14 @@
 
     <form id="upload-form">
       <label class="tray" id="tray">
-        <input id="file" type="file" accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,image/*">
+        <input id="file" type="file" accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain,image/png,image/jpeg,image/webp,image/*">
         <span class="tray-title" id="tray-title">Turn in your paper</span>
-        <span class="tray-hint" id="tray-hint">Tap to choose a PDF or an image, or drop it here. Up to 8 pages.</span>
+        <span class="tray-hint" id="tray-hint">Tap to choose a PDF, Word file or image, or drop it here. Up to 8 pages.</span>
       </label>
+
+      <label class="paste-label" for="paste">Or paste your writing</label>
+      <textarea id="paste" class="paste" rows="5" spellcheck="false" placeholder="An email, a cover letter, an essay..."></textarea>
+      <p class="paste-meta" id="paste-meta" hidden></p>
 
       <fieldset class="tone">
         <legend>How tough should the grader be?</legend>

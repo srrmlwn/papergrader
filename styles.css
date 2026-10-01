@@ -96,7 +96,7 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 /* the drop tray */
 .tray {
   display: block; position: relative; cursor: pointer;
-  margin: 0 0 var(--line); padding: calc(var(--line) / 2) 18px;
+  margin: 0 0 calc(var(--line) / 2); padding: calc(var(--line) / 2) 18px;
   min-height: calc(var(--line) * 4);
   border: 2px dashed #9aa6b8; border-radius: 6px;
   background: rgba(255,255,255,.7);
@@ -106,6 +106,21 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 .tray-title { display: block; font: 700 34px/48px var(--hand); color: var(--type); }
 .tray.has-file .tray-title { color: var(--ink); }
 .tray-hint { display: block; color: var(--faint); font-size: 15px; }
+
+/* paste box: writing on the ruled lines */
+.paste-label { display: block; font: 700 26px/var(--line) var(--hand); color: var(--ink); }
+.paste {
+  display: block; width: 100%; margin: 0; padding: 0 4px;
+  font: 17px/var(--line) var(--typed); color: var(--type);
+  min-height: calc(var(--line) * 5); resize: vertical;
+  border: 0; border-left: 2px solid transparent; border-radius: 0;
+  background: transparent;
+}
+.paste::placeholder { color: #9aa1ad; }
+.paste:focus { outline: none; border-left-color: var(--ink); }
+.paste.dimmed { opacity: .45; }
+.paste-meta { margin: 0; color: var(--faint); font-size: 15px; }
+.paste-meta + .tone, .paste + .tone { margin-top: calc(var(--line) / 2); }
 
 /* tone: the chosen option gets circled in red, same as the marks on a paper */
 .tone { border: 0; margin: 0; padding: 0; }
