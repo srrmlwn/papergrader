@@ -1,9 +1,9 @@
-import { readFile, readText, pageText, MAX_PAGES } from "./readers.js";
+import { readFile, readText, pageText, editableText, MAX_PAGES } from "./readers.js";
 import { markPage } from "./ink.js";
 
 const JSPDF = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
 const $ = (id) => document.getElementById(id);
-const views = ["gate", "upload", "working", "result"];
+const views = ["gate", "upload", "working", "result", "rewrite"];
 const show = (v) => views.forEach(id => { $(id).hidden = id !== v; });
 
 const store = {
@@ -74,6 +74,8 @@ const tray = $("tray");
 tray.addEventListener("drop", (e) => pick(e.dataTransfer.files[0]));
 
 // ---------- grading ----------
+let current = null;     // the paper on screen: { name, tone, text, header, comments, round }
+
 $("upload-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const pasted = chosen ? "" : $("paste").value;
@@ -84,27 +86,34 @@ $("upload-form").addEventListener("submit", async (e) => {
   }
   const name = chosen ? chosen.name : "Pasted text";
   const tone = new FormData(e.target).get("tone") || "fair";
-  $("working-name").textContent = chosen ? chosen.name : "your writing";
+  await runGrade({ file: chosen, text: pasted, name, tone, label: chosen ? chosen.name : "your writing", onFail: "upload" });
+});
+
+async function runGrade({ file, text, name, tone, label, previous = null, onFail }) {
+  $("working-name").textContent = label;
   show("working");
   const status = (s) => { $("status").textContent = s; };
   try {
     await document.fonts.load('34px "Caveat"');
-    const doc = chosen ? await readFile(chosen, status) : await readText(pasted, status);
+    const doc = file ? await readFile(file, status) : await readText(text, status);
     const texts = doc.pages.map(p => pageText(p.words));
     if (!texts.join("").trim()) throw new Error("No readable text was found. If this is a photo, try a sharper, straighter shot.");
 
-    status("Grading your paper");
+    status(previous ? "Grading your rewrite" : "Grading your paper");
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passcode, tone, name, pages: texts.map((text, i) => ({ page: i + 1, text })) }),
+      body: JSON.stringify({ passcode, tone, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
     if (!r.ok) throw new Error(g.error || "Grading failed. Try again.");
 
     status("Marking it up");
+    const round = previous ? previous.round + 1 : 1;
+    const baseTitle = previous ? previous.header.baseTitle : (g.title || name.replace(/\.[^.]+$/, ""));
     const header = {
-      title: g.title || name.replace(/\.[^.]+$/, ""),
+      baseTitle,
+      title: round > 1 ? `${baseTitle} (rewrite${round > 2 ? " " + (round - 1) : ""})` : baseTitle,
       grade: g.grade || "?", points: Math.max(0, g.points | 0),
       verdict: g.verdict || "", summary: g.summary || "",
     };
@@ -116,17 +125,69 @@ $("upload-form").addEventListener("submit", async (e) => {
       const issues = (g.issues || []).filter(x => (x.page || 1) === i + 1);
       const out = await markPage(doc.pages[i], issues, { index: i, count: doc.pages.length, header });
       canvases.push(out.canvas); dropped += out.dropped.length; missing += out.missing.length;
-      for (const [list, status] of [[out.placed, "placed"], [out.dropped, "dropped"], [out.missing, "missing"]])
-        for (const x of list) comments.push({ ...x, page: i + 1, status, k: order.get(x) ?? 999 });
+      for (const [list, st] of [[out.placed, "placed"], [out.dropped, "dropped"], [out.missing, "missing"]])
+        for (const x of list) comments.push({ ...x, page: i + 1, status: st, k: order.get(x) ?? 999 });
     }
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
-    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated, comments, pages: doc.pages.length });
+    const editable = editableText(doc);
+    const compare = previous ? compareRounds(previous, editable) : null;
+    current = { name, tone, text: editable, header, comments, round };
+    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated, comments, pages: doc.pages.length, compare });
   } catch (err) {
     console.error(err);
-    show("upload");
-    $("upload-error").textContent = err.message || "Something went wrong. Try again.";
-    $("upload-error").hidden = false;
+    show(onFail);
+    const box = onFail === "rewrite" ? $("rewrite-error") : $("upload-error");
+    box.textContent = err.message || "Something went wrong. Try again.";
+    box.hidden = false;
   }
+}
+
+// How many of the previous round's problems no longer appear in the rewrite, judged by
+// their marked text. Short marks must vanish exactly (case counts: "friday" -> "Friday");
+// long ones (whole sentences) count as gone when most of their wording has changed.
+function compareRounds(prev, newText) {
+  const toks = (t) => String(t).replace(/[\u2018\u2019]/g, "'").split(/[^A-Za-z0-9']+/).filter(Boolean);
+  const hayToks = toks(newText);
+  const hay = " " + hayToks.join(" ") + " ";
+  const grams = new Set(hayToks.slice(2).map((t, i) => `${hayToks[i]} ${hayToks[i + 1]} ${t}`));
+  const stillThere = (anchor) => {
+    const a = toks(anchor);
+    if (!a.length) return true;
+    if (a.length <= 8) return hay.includes(" " + a.join(" ") + " ");
+    const g = a.slice(2).map((t, i) => `${a[i]} ${a[i + 1]} ${t}`);
+    return g.filter(x => grams.has(x)).length / g.length >= 0.5;
+  };
+  const problems = prev.comments.filter(c => c.kind !== "praise");
+  const gone = problems.filter(c => !stillThere(c.anchor));
+  return { from: prev.header.grade, gone: gone.length, total: problems.length };
+}
+
+// ---------- rewrite ----------
+function openRewrite() {
+  if (!current) return;
+  $("rewrite-text").value = current.text;
+  $("rewrite-error").hidden = true;
+  $("rewrite-comments").appendChild($("comments-section"));      // keep the comments in view while editing
+  $("comments-section").hidden = !current.comments.length;
+  show("rewrite");
+  window.scrollTo({ top: 0 });
+  $("rewrite-text").focus({ preventScroll: true });
+}
+function closeRewrite() {
+  $("result").appendChild($("comments-section"));
+  show("result");
+  syncRhythm();
+}
+$("rewrite").addEventListener("click", (e) => { if (e.target.id === "rewrite-cancel") closeRewrite(); });
+$("rewrite-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("rewrite-text").value;
+  if (!text.trim()) { $("rewrite-error").textContent = "The rewrite is empty."; $("rewrite-error").hidden = false; return; }
+  if (text.trim() === current.text.trim()) { $("rewrite-error").textContent = "Nothing has changed yet. Edit the text, then regrade."; $("rewrite-error").hidden = false; return; }
+  $("result").appendChild($("comments-section"));
+  const prev = current;
+  await runGrade({ text, name: prev.name, tone: prev.tone, label: "your rewrite", previous: prev, onFail: "rewrite" });
+  if ($("rewrite").hidden === false) $("rewrite-comments").appendChild($("comments-section"));
 });
 
 async function showResult(canvases, header, info) {
@@ -144,6 +205,15 @@ async function showResult(canvases, header, info) {
     box.appendChild(a);
   });
   $("result-title").textContent = `${header.title}: ${header.grade}`;
+  const cmp = info.compare;
+  $("result-compare").hidden = !cmp;
+  if (cmp) {
+    $("compare-from").textContent = cmp.from;
+    $("compare-to").textContent = header.grade;
+    $("compare-detail").textContent = cmp.total
+      ? `${cmp.gone} of ${cmp.total} marked ${cmp.total === 1 ? "problem" : "problems"} no longer ${cmp.total === 1 ? "appears" : "appear"} in your rewrite.`
+      : "";
+  }
   const notes = [];
   if (info.truncated) notes.push(`Your writing ran past ${MAX_PAGES} pages; only the first ${MAX_PAGES} were graded.`);
   else if (info.total > MAX_PAGES) notes.push(`Only the first ${MAX_PAGES} of ${info.total} pages were graded.`);
@@ -288,7 +358,9 @@ $("share").addEventListener("click", async () => {
     await navigator.share({ files: [new File([result.blobs[0]], `${result.slug}-graded.png`, { type: "image/png" })], title: "Graded paper" });
   } catch { /* user cancelled */ }
 });
+$("rewrite-open").addEventListener("click", openRewrite);
 $("again").addEventListener("click", () => {
+  current = null;
   clearFile();
   $("paste").value = ""; $("paste").classList.remove("dimmed"); $("paste-meta").hidden = true;
   $("submit").disabled = true;

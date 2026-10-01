@@ -1,7 +1,7 @@
 // readers.js: turn an uploaded file into page images + positioned words.
 // PDFs use their own text layer (exact positions); images and scanned PDFs use OCR;
 // Word files and pasted text are typeset onto clean pages (typeset.js).
-import { typeset, blocksFromText, blocksFromHtml, loadTypesetFonts } from "./typeset.js";
+import { typeset, blocksFromText, blocksFromHtml, blocksToText, loadTypesetFonts } from "./typeset.js";
 
 const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
 const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
@@ -59,13 +59,13 @@ async function readDocx(file, onStatus) {
   catch { throw new Error("That Word file couldn't be read. Try saving it again, or export it as a PDF."); }
   const blocks = blocksFromHtml(html);
   if (!blocks.length) throw new Error("No text was found in that Word file.");
-  return layOut(blocks, onStatus);
+  return { ...(await layOut(blocks, onStatus)), source: blocksToText(blocks) };
 }
 
 export async function readText(text, onStatus) {
   const blocks = blocksFromText(text);
   if (!blocks.length) throw new Error("Paste some text to grade.");
-  return layOut(blocks, onStatus);
+  return { ...(await layOut(blocks, onStatus)), source: String(text).trim() };
 }
 
 async function layOut(blocks, onStatus) {
@@ -175,4 +175,35 @@ export function pageText(words) {
     .sort((a, b) => a[0].y - b[0].y)
     .map(ws => ws.map(w => w.text).join(" "))
     .join("\n");
+}
+
+// Editable text for a rewrite: the original text when we have it (paste, Word),
+// otherwise the page words reflowed into paragraphs (PDF, images).
+export function editableText(doc) {
+  if (doc.source) return doc.source;
+  return doc.pages.map(p => reflow(p.words)).filter(Boolean).join("\n\n");
+}
+function reflow(words) {
+  const map = new Map();
+  for (const w of words) { if (!map.has(w.line)) map.set(w.line, []); map.get(w.line).push(w); }
+  const lines = [...map.values()].map(ws => {
+    ws.sort((a, b) => a.x - b.x);
+    return { text: ws.map(w => w.text).join(" "), top: Math.min(...ws.map(w => w.y)),
+             left: ws[0].x, right: Math.max(...ws.map(w => w.x + w.w)), h: Math.max(...ws.map(w => w.h)) };
+  }).sort((a, b) => a.top - b.top);
+  if (!lines.length) return "";
+  const maxRight = Math.max(...lines.map(l => l.right));
+  const gaps = lines.slice(1).map((l, i) => l.top - lines[i].top).sort((a, b) => a - b);
+  const step = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
+  let out = lines[0].text;
+  for (let i = 1; i < lines.length; i++) {
+    const prev = lines[i - 1], cur = lines[i];
+    const bigGap = step && cur.top - prev.top > step * (prev.right < maxRight * 0.82 ? 1.22 : 1.45);
+    const shortPrev = prev.right < maxRight * 0.82;
+    const listStart = /^(?:[-*•]|\d{1,3}[.)])\s/.test(cur.text);
+    if (bigGap) out += "\n\n" + cur.text;
+    else if (shortPrev || listStart) out += "\n" + cur.text;
+    else out += (/-$/.test(out) ? "" : " ") + cur.text;
+  }
+  return out;
 }

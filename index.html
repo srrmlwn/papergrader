@@ -73,8 +73,13 @@
   <section id="result" class="view" hidden>
     <div class="result-head">
       <p class="lede lede-small" id="result-title"></p>
+      <p class="compare" id="result-compare" hidden>
+        <span class="compare-grades"><span id="compare-from"></span> <span class="compare-arrow" aria-label="now">→</span> <span id="compare-to"></span></span>
+        <span class="compare-detail" id="compare-detail"></span>
+      </p>
       <div class="actions">
-        <button class="btn" id="dl-pdf">Download PDF</button>
+        <button class="btn" id="rewrite-open">Turn in a rewrite</button>
+        <button class="btn btn-quiet" id="dl-pdf">Download PDF</button>
         <button class="btn btn-quiet" id="dl-png">Save as image</button>
         <button class="btn btn-quiet" id="share" hidden>Share</button>
         <button class="btn btn-quiet" id="again">Grade another paper</button>
@@ -92,6 +97,22 @@
       <p class="comments-summary" id="comments-summary"></p>
       <div id="comments"></div>
     </section>
+  </section>
+
+  <!-- 5. rewrite -->
+  <section id="rewrite" class="view" hidden>
+    <p class="lede lede-small">Fix it up and turn it in again.</p>
+    <form id="rewrite-form">
+      <label class="paste-label" for="rewrite-text">Your rewrite</label>
+      <textarea id="rewrite-text" class="paste rewrite-text" rows="14" spellcheck="true"></textarea>
+      <div class="actions rewrite-actions">
+        <button class="btn btn-big" type="submit">Regrade</button>
+        <button class="btn btn-quiet" type="button" id="rewrite-cancel">Back to the graded paper</button>
+      </div>
+      <p id="rewrite-error" class="error" role="alert" hidden></p>
+    </form>
+    <p class="aside">It's graded fresh, without seeing the old grade, so the new grade is honest.</p>
+    <div id="rewrite-comments"></div>
   </section>
 
   <footer class="foot">
