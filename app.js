@@ -143,11 +143,13 @@ async function showResult(canvases, header, info) {
     img.src = URL.createObjectURL(b);
     img.alt = `Page ${i + 1} of the graded paper`;
     img.width = canvases[i].width; img.height = canvases[i].height;
-    const a = document.createElement("a");          // tap to open full size (zoomable on phones)
-    a.href = img.src; a.target = "_blank"; a.rel = "noopener";
-    a.title = "Open full size"; a.appendChild(img);
+    const btn = document.createElement("button");      // tap to view the pages full size, on this tab
+    btn.type = "button"; btn.className = "page-btn";
+    btn.setAttribute("aria-label", `View page ${i + 1} full size`);
+    btn.addEventListener("click", () => openViewer(i, btn));
+    btn.appendChild(img);
     img.addEventListener("load", syncRhythm);
-    box.appendChild(a);
+    box.appendChild(btn);
   });
   $("result-title").textContent = `${header.title}: ${header.grade}`;
   const notes = [];
@@ -202,6 +204,34 @@ $("copy-comments").addEventListener("click", async () => {
   }
   setTimeout(() => { btn.textContent = "Copy comments"; }, 1800);
 });
+
+// ---------- full-size viewer: all pages stacked, scroll through, tap outside to close ----------
+let viewerReturnFocus = null;
+function openViewer(index, from) {
+  const v = $("viewer"), list = $("viewer-pages");
+  list.innerHTML = "";
+  result.blobs.forEach((b, i) => {
+    const img = new Image();
+    img.src = $("pages").querySelectorAll("img")[i].src;
+    img.alt = `Page ${i + 1} of the graded paper`;
+    img.width = result.canvases[i].width; img.height = result.canvases[i].height;
+    list.appendChild(img);
+  });
+  viewerReturnFocus = from || null;
+  v.hidden = false;
+  document.documentElement.classList.add("viewer-open");
+  v.scrollTop = 0;
+  requestAnimationFrame(() => { list.children[index]?.scrollIntoView({ block: "start" }); });
+  $("viewer-close").focus({ preventScroll: true });
+}
+function closeViewer() {
+  if ($("viewer").hidden) return;
+  $("viewer").hidden = true;
+  document.documentElement.classList.remove("viewer-open");
+  viewerReturnFocus?.focus({ preventScroll: true });
+}
+$("viewer").addEventListener("click", (e) => { if (e.target.tagName !== "IMG") closeViewer(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeViewer(); });
 
 // ---------- downloads ----------
 function download(blob, name) {

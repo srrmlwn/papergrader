@@ -32,3 +32,4 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 - Simplified: one Download button (image for one page, PDF for several); one grader voice (no Strict / Fair / Kind)
 - Deployed on Vercel from this repo (auto-deploys on push to `main`)
 - Clear "usage limit reached" message when the monthly spend limit is hit
+- Tap a page to view all pages full size on the same tab (scroll through; tap outside, × or Esc to close)
