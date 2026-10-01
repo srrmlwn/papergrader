@@ -141,10 +141,17 @@ export default async function handler(req, res) {
 
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
-    console.error("anthropic error", r.status, JSON.stringify(data).slice(0, 500));
+    const detail = String(data?.error?.message || "");
+    // A spend limit (yours, or the account tier's monthly cap) won't clear by retrying.
+    const spendLimit = (r.status === 400 && /spend|limit|credit|billing|usage/i.test(detail) && !/workspace-id|scoped to a workspace/i.test(detail))
+      || (r.status === 429 && !r.headers.get("retry-after"));
+    console.error(spendLimit ? "spend-limit-reached" : "anthropic error", r.status, JSON.stringify(data).slice(0, 500));
+    if (spendLimit) {
+      return send(res, 503, { error: "Grading is paused because this month's usage limit has been reached. It will work again when the limit resets or is raised." });
+    }
     const msg = r.status === 429 ? "The grader is busy right now. Try again in a minute."
       : r.status === 401 || r.status === 403 ? "The grader's API key was rejected. The app owner needs to check it."
-      : r.status === 400 && /workspace/i.test(JSON.stringify(data)) ? "The grader's API key needs a workspace. The app owner needs to set ANTHROPIC_WORKSPACE_ID or use a workspace key."
+      : r.status === 400 && /workspace/i.test(detail) ? "The grader's API key needs a workspace. The app owner needs to set ANTHROPIC_WORKSPACE_ID or use a workspace key."
       : "The grader returned an error. Try again.";
     return send(res, 502, { error: msg });
   }
