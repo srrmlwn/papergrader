@@ -230,7 +230,10 @@ function closeViewer() {
   document.documentElement.classList.remove("viewer-open");
   viewerReturnFocus?.focus({ preventScroll: true });
 }
-$("viewer").addEventListener("click", (e) => { if (e.target.tagName !== "IMG") closeViewer(); });
+// Click outside a page closes it. On phones the pages fill the screen, so any tap closes it
+// (scrolling and pinch-zooming don't produce taps).
+const narrow = window.matchMedia("(max-width: 600px)");
+$("viewer").addEventListener("click", (e) => { if (narrow.matches || e.target.tagName !== "IMG") closeViewer(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeViewer(); });
 
 // ---------- downloads ----------
