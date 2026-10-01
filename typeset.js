@@ -215,17 +215,3 @@ export function blocksFromHtml(html) {
   return blocks;
 }
 
-// ---------- blocks -> plain text (for editing a rewrite) ----------
-export function blocksToText(blocks) {
-  const out = [];
-  let prevList = false;
-  for (const b of blocks) {
-    const text = b.runs.map(r => (r.br ? "\n" : r.text)).join("").replace(/[ \t]+/g, " ").trim();
-    const isList = b.type === "li";
-    const line = isList ? `${"   ".repeat(b.level || 0)}${b.marker === "•" ? "-" : b.marker} ${text}` : text;
-    if (out.length) out.push(isList && prevList ? "\n" : "\n\n");
-    out.push(line);
-    prevList = isList;
-  }
-  return out.join("");
-}

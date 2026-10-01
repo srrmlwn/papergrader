@@ -2,15 +2,15 @@
 
 Ordered by priority. **[You]** = needs manual effort from the owner; everything else Claude builds.
 Guiding rule: keep the app very simple and easy to understand. Prefer one obvious button over a new screen or setting.
-Status: `[ ]` to do, `[~]` in progress, `[x]` done.
+Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
 | 1 | [x] | Set a monthly spend limit on the Anthropic workspace | **[You]** | Done (owner set a monthly limit). |
 | 2 | [x] | Copy comments button | Claude | Done (simplified): one Copy comments button next to the downloads. No list on the page. |
-| 3 | [x] | Rewrite and regrade loop | Claude | Done: "Turn in a rewrite" opens an editor (original text, or PDF/photo text rebuilt into paragraphs) with the graded pages below; regrade is independent of the old grade; result shows "C → B+" and how many marked problems are gone. Repeatable. |
+| 3 | [-] | Rewrite and regrade loop | Claude | Removed: people fix their writing in their own editor; "Grade another paper" covers resubmitting. |
 | 4 | [~] | Test on iPhone Safari with real phone photos | **[You]** test, Claude fixes | Photo of a printed page (HEIC), a skewed shot, a multi-page PDF, paste, Word. Report anything odd. |
-| 5 | [ ] | Usage, cost and quality logging + "flag this comment" | **[You]** add storage, Claude builds | You add an Upstash Redis (or Vercel KV) integration in Vercel; Claude logs grades, cost, dropped/unmatched notes, flags. |
+| 5 | [-] | Usage, cost and quality logging + "flag this comment" | Deferred | Not needed while the app is passcode-only: cost and volume are in the Anthropic Console, errors in Vercel logs. Revisit (with a small database such as Upstash Redis) before opening it to the public. |
 | 6 | [x] | Grade by the right standard for the kind of writing | Claude | Done (simplified): no question on screen; the grader works out whether it is an essay, work writing or a resume and uses that standard. |
 | 7 | [x] | Privacy note | Claude | Done: "What happens to your writing" in the footer. Server no longer logs any document text. **Update this note if #5 stores anything.** |
 | 8 | [ ] | Pick the final name and domain | **[You]** decide/buy, Claude updates the app | Candidate: "Handed Back". Check domain + USPTO. Rename repo/Vercel project if wanted. |
