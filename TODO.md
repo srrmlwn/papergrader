@@ -6,7 +6,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done.
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
-| 1 | [ ] | Set a monthly spend limit on the Anthropic workspace | **[You]** | Console → workspace → Limits. Caps the worst case if the passcode leaks. 2 min. |
+| 1 | [x] | Set a monthly spend limit on the Anthropic workspace | **[You]** | Done (owner set a monthly limit). |
 | 2 | [x] | Copy comments button | Claude | Done (simplified): one Copy comments button next to the downloads. No list on the page. |
 | 3 | [x] | Rewrite and regrade loop | Claude | Done: "Turn in a rewrite" opens an editor (original text, or PDF/photo text rebuilt into paragraphs) with the graded pages below; regrade is independent of the old grade; result shows "C → B+" and how many marked problems are gone. Repeatable. |
 | 4 | [~] | Test on iPhone Safari with real phone photos | **[You]** test, Claude fixes | Photo of a printed page (HEIC), a skewed shot, a multi-page PDF, paste, Word. Report anything odd. |
