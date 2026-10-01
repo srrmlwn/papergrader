@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paper Grader</title>
+<meta name="description" content="Upload a document and get it back marked up in red pen: circles, notes in the margins and a grade.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23fff'/%3E%3Cpath d='M14 34c2-14 30-18 36-6s-10 22-24 18' fill='none' stroke='%23C4161C' stroke-width='5' stroke-linecap='round'/%3E%3Ctext x='21' y='41' font-family='Georgia' font-size='20' fill='%23C4161C'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="sheet">
+  <header class="masthead">
+    <h1 class="brand">Paper Grader</h1>
+  </header>
+
+  <!-- 1. passcode -->
+  <section id="gate" class="view" hidden>
+    <p class="lede">Drop in a document.<br>Get it back graded, in red pen.</p>
+    <form id="gate-form" class="gate" autocomplete="off">
+      <label for="passcode">Class passcode</label>
+      <div class="row">
+        <input id="passcode" name="passcode" type="password" inputmode="text" autocapitalize="off" spellcheck="false" required>
+        <button type="submit" class="btn">Enter</button>
+      </div>
+      <p id="gate-error" class="error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <!-- 2. upload -->
+  <section id="upload" class="view" hidden>
+    <p class="lede">Drop in a document.<br>Get it back
+      <span class="circled">graded<svg viewBox="0 0 200 80" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M150 14 C 105 -2, 18 4, 10 38 C 3 70, 120 78, 178 56 C 212 40, 188 12, 128 10"/></svg></span>,
+      in red pen.</p>
+
+    <form id="upload-form">
+      <label class="tray" id="tray">
+        <input id="file" type="file" accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,image/*">
+        <span class="tray-title" id="tray-title">Turn in your paper</span>
+        <span class="tray-hint" id="tray-hint">Tap to choose a PDF or an image, or drop it here. Up to 8 pages.</span>
+      </label>
+
+      <fieldset class="tone">
+        <legend>How tough should the grader be?</legend>
+        <div class="tone-options">
+          <label><input type="radio" name="tone" value="strict"><span>Strict</span></label>
+          <label><input type="radio" name="tone" value="fair" checked><span>Fair</span></label>
+          <label><input type="radio" name="tone" value="kind"><span>Kind</span></label>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
+      <p id="upload-error" class="error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <!-- 3. working -->
+  <section id="working" class="view" hidden aria-live="polite">
+    <p class="lede">Grading <span id="working-name"></span></p>
+    <p class="status"><span id="status">Reading your document</span><span class="caret" aria-hidden="true"></span></p>
+    <p class="aside">Grading usually takes 20 to 60 seconds. Keep this page open.</p>
+  </section>
+
+  <!-- 4. result -->
+  <section id="result" class="view" hidden>
+    <div class="result-head">
+      <p class="lede lede-small" id="result-title"></p>
+      <div class="actions">
+        <button class="btn" id="dl-pdf">Download PDF</button>
+        <button class="btn btn-quiet" id="dl-png">Save as image</button>
+        <button class="btn btn-quiet" id="share" hidden>Share</button>
+        <button class="btn btn-quiet" id="again">Grade another paper</button>
+      </div>
+      <p class="aside" id="result-notes"></p>
+    </div>
+    <div class="pages" id="pages"></div>
+  </section>
+
+  <footer class="foot">
+    <p>Grades are written by Claude and can be wrong. Your file is read in your browser; only its text is sent for grading and nothing is stored.</p>
+  </footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
