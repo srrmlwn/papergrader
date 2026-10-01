@@ -318,7 +318,7 @@ export async function markPage(page, issues, meta) {
   let cx0 = 0, cy0 = 0, cx1 = src.width, cy1 = src.height;
   if (page.words.length && page.crop) {
     cx0 = Math.max(0, Math.min(...page.words.map(w => w.x)) - 10);
-    cy0 = Math.max(0, Math.min(...page.words.map(w => w.y)) - 10);
+    cy0 = firstInkRow(src, cx0, cx1, Math.min(...page.words.map(w => w.y)));
     cx1 = Math.min(src.width, Math.max(...page.words.map(w => w.x + w.w)) + 10);
     cy1 = Math.min(src.height, Math.max(...page.words.map(w => w.y + w.h)) + 10);
   }
@@ -443,6 +443,22 @@ function placeSummary({ base, ink, W, H }, space, words, side, h) {
   drawLines(ic, [h.verdict], vs, x, y);
   drawLines(ic, lines, ss, x, y + vs * 1.2);
   return { base, ink, W, H };
+}
+
+// Top edge of the content: the first row with real ink across the text column, so titles,
+// logos and letterheads drawn as images above the first line of text are kept.
+function firstInkRow(src, x0, x1, firstWordY) {
+  const w = Math.max(1, Math.round(x1 - x0)), h = Math.max(1, Math.round(firstWordY));
+  const ctx = src.getContext("2d", { willReadFrequently: true });
+  const d = ctx.getImageData(Math.round(x0), 0, w, h).data;
+  for (let y = 0; y < h; y++) {
+    let dark = 0;
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (d[i] + d[i + 1] + d[i + 2] < 600) { if (++dark > 3) return Math.max(0, y - 10); }
+    }
+  }
+  return Math.max(0, firstWordY - 10);
 }
 
 function whiten(ctx, W, H) {                  // scanner-gray / off-white paper -> white

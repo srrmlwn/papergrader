@@ -85,12 +85,11 @@ $("upload-form").addEventListener("submit", async (e) => {
     $("upload-error").hidden = false; return;
   }
   const name = chosen ? chosen.name : "Pasted text";
-  const form = new FormData(e.target);
-  const tone = form.get("tone") || "fair", kind = form.get("kind") || "other";
-  await runGrade({ file: chosen, text: pasted, name, tone, kind, label: chosen ? chosen.name : "your writing", onFail: "upload" });
+  const tone = new FormData(e.target).get("tone") || "fair";
+  await runGrade({ file: chosen, text: pasted, name, tone, label: chosen ? chosen.name : "your writing", onFail: "upload" });
 });
 
-async function runGrade({ file, text, name, tone, kind = "other", label, previous = null, onFail }) {
+async function runGrade({ file, text, name, tone, label, previous = null, onFail }) {
   $("working-name").textContent = label;
   show("working");
   const status = (s) => { $("status").textContent = s; };
@@ -103,7 +102,7 @@ async function runGrade({ file, text, name, tone, kind = "other", label, previou
     status(previous ? "Grading your rewrite" : "Grading your paper");
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passcode, tone, kind, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
+      body: JSON.stringify({ passcode, tone, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
@@ -132,7 +131,7 @@ async function runGrade({ file, text, name, tone, kind = "other", label, previou
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
     const editable = editableText(doc);
     const compare = previous ? compareRounds(previous, editable) : null;
-    current = { name, tone, kind, text: editable, header, comments, round };
+    current = { name, tone, text: editable, header, comments, round };
     await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated, comments, pages: doc.pages.length, compare });
   } catch (err) {
     console.error(err);
@@ -168,14 +167,14 @@ function openRewrite() {
   if (!current) return;
   $("rewrite-text").value = current.text;
   $("rewrite-error").hidden = true;
-  $("rewrite-comments").appendChild($("comments-section"));      // keep the comments in view while editing
-  $("comments-section").hidden = !current.comments.length;
+  $("rewrite-pages").appendChild($("pages"));      // keep the marked-up pages in view while editing
+  $("pages").style.paddingBottom = "0px";
   show("rewrite");
   window.scrollTo({ top: 0 });
   $("rewrite-text").focus({ preventScroll: true });
 }
 function closeRewrite() {
-  $("result").appendChild($("comments-section"));
+  $("result").appendChild($("pages"));
   show("result");
   syncRhythm();
 }
@@ -185,10 +184,10 @@ $("rewrite-form").addEventListener("submit", async (e) => {
   const text = $("rewrite-text").value;
   if (!text.trim()) { $("rewrite-error").textContent = "The rewrite is empty."; $("rewrite-error").hidden = false; return; }
   if (text.trim() === current.text.trim()) { $("rewrite-error").textContent = "Nothing has changed yet. Edit the text, then regrade."; $("rewrite-error").hidden = false; return; }
-  $("result").appendChild($("comments-section"));
+  $("result").appendChild($("pages"));
   const prev = current;
-  await runGrade({ text, name: prev.name, tone: prev.tone, kind: prev.kind, label: "your rewrite", previous: prev, onFail: "rewrite" });
-  if ($("rewrite").hidden === false) $("rewrite-comments").appendChild($("comments-section"));
+  await runGrade({ text, name: prev.name, tone: prev.tone, label: "your rewrite", previous: prev, onFail: "rewrite" });
+  if ($("rewrite").hidden === false) $("rewrite-pages").appendChild($("pages"));
 });
 
 async function showResult(canvases, header, info) {
@@ -221,7 +220,6 @@ async function showResult(canvases, header, info) {
   if (info.dropped) notes.push(`${info.dropped} minor ${info.dropped === 1 ? "note was" : "notes were"} left off because the page ran out of room.`);
   if (info.missing) notes.push(`${info.missing} ${info.missing === 1 ? "comment" : "comments"} couldn't be matched to the text and ${info.missing === 1 ? "was" : "were"} skipped.`);
   $("result-notes").textContent = notes.join(" ");
-  renderComments(header, info.comments || [], info.pages || canvases.length);
   const slug = header.title.replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "paper";
   result = { canvases, blobs, slug };
   const file0 = new File([blobs[0]], `${slug}-graded.png`, { type: "image/png" });
@@ -243,62 +241,18 @@ function syncRhythm() {
 }
 window.addEventListener("resize", syncRhythm);
 
-// ---------- comments as text ----------
-const STATUS_TEXT = {
-  dropped: "Not written on the page (no room)",
-  missing: "Couldn't find this exact text on the page",
-};
-function el(tag, cls, text) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text != null) e.textContent = text;
-  return e;
-}
-function snippet(s, n = 70) { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
-
-function renderComments(header, comments, pageCount) {
-  const box = $("comments"); box.innerHTML = "";
-  $("comments-link").hidden = !comments.length;
-  $("comments-section").hidden = !comments.length;
-  if (!comments.length) return;
-  $("comments-link").textContent = `Read all ${comments.length} comments as text`;
-  $("comments-summary").textContent = [header.verdict, header.summary].filter(Boolean).join(" ");
-  let list = null, lastPage = 0;
-  for (const c of comments) {
-    if (pageCount > 1 && c.page !== lastPage) {
-      box.appendChild(el("h3", "c-page", `Page ${c.page}`));
-      list = null; lastPage = c.page;
-    }
-    if (!list) { list = el("ol", "c-list"); box.appendChild(list); }
-    const li = el("li", "c-item" + (c.kind === "praise" ? " c-praise" : ""));
-    const quote = el("p", "c-quote");
-    quote.appendChild(el("q", null, snippet(c.anchor)));
-    if (c.insert && c.insert.trim()) {
-      quote.appendChild(document.createTextNode(" "));
-      quote.appendChild(el("span", "c-arrow", "→"));
-      quote.appendChild(document.createTextNode(" "));
-      quote.appendChild(el("span", "c-fix", c.insert.trim()));
-    }
-    li.appendChild(quote);
-    li.appendChild(el("p", "c-note", c.note));
-    if (STATUS_TEXT[c.status]) li.appendChild(el("p", "c-status", STATUS_TEXT[c.status]));
-    list.appendChild(li);
-  }
-  result_comments = { header, comments, pageCount };
-}
-let result_comments = null;
-
+// ---------- copy comments as plain text ----------
 function commentsAsText() {
-  const { header, comments, pageCount } = result_comments;
+  const { header, comments } = current;
+  const multi = comments.some(c => c.page > 1);
   const out = [`${header.title}: ${header.grade} (-${header.points} pts)`];
   if (header.verdict) out.push(header.verdict);
   if (header.summary) out.push(header.summary);
   let last = 0;
   for (const c of comments) {
-    if (pageCount > 1 && c.page !== last) { out.push("", `Page ${c.page}`); last = c.page; }
-    else if (last === 0) { out.push(""); last = c.page; }
+    if (c.page !== last) { out.push("", multi ? `Page ${c.page}` : "Comments"); last = c.page; }
     const fix = c.insert && c.insert.trim() ? ` -> ${c.insert.trim()}` : "";
-    out.push(`- "${snippet(c.anchor, 120)}"${fix}: ${c.note}`);
+    out.push(`- "${String(c.anchor).replace(/\s+/g, " ").trim()}"${fix}: ${c.note}`);
   }
   return out.join("\n");
 }
@@ -310,7 +264,7 @@ $("copy-comments").addEventListener("click", async () => {
   } catch {
     btn.textContent = "Couldn't copy";
   }
-  setTimeout(() => { btn.textContent = "Copy all comments"; }, 1800);
+  setTimeout(() => { btn.textContent = "Copy comments"; }, 1800);
 });
 
 // ---------- downloads ----------

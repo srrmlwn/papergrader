@@ -49,16 +49,6 @@
       <p class="paste-meta" id="paste-meta" hidden></p>
 
       <fieldset class="tone">
-        <legend>What is it?</legend>
-        <div class="tone-options">
-          <label><input type="radio" name="kind" value="essay"><span>Essay</span></label>
-          <label><input type="radio" name="kind" value="work"><span>Work writing</span></label>
-          <label><input type="radio" name="kind" value="resume"><span>Resume</span></label>
-          <label><input type="radio" name="kind" value="other" checked><span>Not sure</span></label>
-        </div>
-      </fieldset>
-
-      <fieldset class="tone">
         <legend>How tough should the grader be?</legend>
         <div class="tone-options">
           <label><input type="radio" name="tone" value="strict"><span>Strict</span></label>
@@ -91,22 +81,13 @@
         <button class="btn" id="rewrite-open">Turn in a rewrite</button>
         <button class="btn btn-quiet" id="dl-pdf">Download PDF</button>
         <button class="btn btn-quiet" id="dl-png">Save as image</button>
+        <button class="btn btn-quiet" id="copy-comments">Copy comments</button>
         <button class="btn btn-quiet" id="share" hidden>Share</button>
         <button class="btn btn-quiet" id="again">Grade another paper</button>
       </div>
       <p class="aside" id="result-notes"></p>
-      <p class="aside"><a href="#comments-section" id="comments-link" class="jump" hidden></a></p>
     </div>
     <div class="pages" id="pages"></div>
-
-    <section id="comments-section" class="comments-section" hidden aria-labelledby="comments-title">
-      <div class="comments-head">
-        <h2 id="comments-title" class="comments-title">The comments</h2>
-        <button class="btn btn-quiet" id="copy-comments" type="button">Copy all comments</button>
-      </div>
-      <p class="comments-summary" id="comments-summary"></p>
-      <div id="comments"></div>
-    </section>
   </section>
 
   <!-- 5. rewrite -->
@@ -122,7 +103,7 @@
       <p id="rewrite-error" class="error" role="alert" hidden></p>
     </form>
     <p class="aside">It's graded fresh, without seeing the old grade, so the new grade is honest.</p>
-    <div id="rewrite-comments"></div>
+    <div id="rewrite-pages"></div>
   </section>
 
   <footer class="foot">
