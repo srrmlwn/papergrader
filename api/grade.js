@@ -153,7 +153,7 @@ export default async function handler(req, res) {
   const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
   let result;
   try { result = JSON.parse(text); } catch {
-    console.error("unparseable output", data.stop_reason, text.slice(0, 300));
+    console.error("unparseable output", data.stop_reason, `${text.length} chars`);  // never log document text
     return send(res, 502, { error: data.stop_reason === "max_tokens" ? "That document was too long to grade in one go. Try fewer pages." : "The grader's answer came back garbled. Try again." });
   }
   result.pagesGraded = pages.length;

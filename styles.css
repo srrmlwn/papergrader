@@ -182,3 +182,6 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 
 .foot { margin-top: calc(var(--line) * 2); color: var(--faint); font-size: 14px; max-width: 62ch; }
 .foot p { margin: 0; }
+.privacy summary { cursor: pointer; color: var(--type); text-decoration: underline; text-underline-offset: 3px; width: fit-content; }
+.privacy summary:focus-visible { outline: 3px solid #2f6fd6; outline-offset: 2px; }
+.privacy[open] p { margin-top: 0; }
