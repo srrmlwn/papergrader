@@ -71,7 +71,7 @@ body {
 @media (prefers-reduced-motion: reduce) { .circled path { animation: none; stroke-dashoffset: 0; } }
 
 /* passcode */
-.gate label, .tone legend { display: block; font: 700 26px/var(--line) var(--hand); color: var(--ink); padding: 0; }
+.gate label { display: block; font: 700 26px/var(--line) var(--hand); color: var(--ink); padding: 0; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; }
 input[type=password], input[type=text] {
   font: 18px var(--typed); color: var(--type);
@@ -91,7 +91,7 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 .btn-quiet { color: var(--ink); background: transparent; }
 .btn-quiet:hover { background: rgba(196, 22, 32, .06); border-color: var(--ink); }
 .btn-big { height: calc(var(--line) * 1.5); font-size: 18px; padding: 0 26px; margin-top: calc(var(--line) / 2); }
-.btn:focus-visible, .tray:focus-within, .tone-options label:focus-within { outline: 3px solid #2f6fd6; outline-offset: 3px; }
+.btn:focus-visible, .tray:focus-within { outline: 3px solid #2f6fd6; outline-offset: 3px; }
 
 /* the drop tray */
 .tray {
@@ -120,20 +120,6 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 .paste:focus { outline: none; border-left-color: var(--ink); }
 .paste.dimmed { opacity: .45; }
 .paste-meta { margin: 0; color: var(--faint); font-size: 15px; }
-.paste-meta + .tone, .paste + .tone { margin-top: calc(var(--line) / 2); }
-
-/* tone: the chosen option gets circled in red, same as the marks on a paper */
-.tone { border: 0; margin: 0; padding: 0; }
-
-.tone-options { display: flex; gap: 0 28px; flex-wrap: wrap; }
-.tone-options label { position: relative; cursor: pointer; font-size: 19px; padding: 0 6px; }
-.tone-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.tone-options span { position: relative; }
-.tone-options input:checked + span::after {
-  content: ""; position: absolute; left: -12px; right: -12px; top: -5px; bottom: -5px;
-  border: 2.5px solid var(--ink); border-radius: 50% 46% 52% 44% / 55% 48% 52% 45%;
-  transform: rotate(-3deg);
-}
 
 /* working */
 .status { margin: 0 0 var(--line); font-size: 19px; }

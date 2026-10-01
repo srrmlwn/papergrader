@@ -74,7 +74,7 @@ const tray = $("tray");
 tray.addEventListener("drop", (e) => pick(e.dataTransfer.files[0]));
 
 // ---------- grading ----------
-let current = null;     // the paper on screen: { name, tone, text, header, comments, round }
+let current = null;     // the paper on screen: { name, text, header, comments, round }
 
 $("upload-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -85,11 +85,10 @@ $("upload-form").addEventListener("submit", async (e) => {
     $("upload-error").hidden = false; return;
   }
   const name = chosen ? chosen.name : "Pasted text";
-  const tone = new FormData(e.target).get("tone") || "fair";
-  await runGrade({ file: chosen, text: pasted, name, tone, label: chosen ? chosen.name : "your writing", onFail: "upload" });
+  await runGrade({ file: chosen, text: pasted, name, label: chosen ? chosen.name : "your writing", onFail: "upload" });
 });
 
-async function runGrade({ file, text, name, tone, label, previous = null, onFail }) {
+async function runGrade({ file, text, name, label, previous = null, onFail }) {
   $("working-name").textContent = label;
   show("working");
   const status = (s) => { $("status").textContent = s; };
@@ -102,7 +101,7 @@ async function runGrade({ file, text, name, tone, label, previous = null, onFail
     status(previous ? "Grading your rewrite" : "Grading your paper");
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passcode, tone, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
+      body: JSON.stringify({ passcode, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
@@ -131,7 +130,7 @@ async function runGrade({ file, text, name, tone, label, previous = null, onFail
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
     const editable = editableText(doc);
     const compare = previous ? compareRounds(previous, editable) : null;
-    current = { name, tone, text: editable, header, comments, round };
+    current = { name, text: editable, header, comments, round };
     await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated, comments, pages: doc.pages.length, compare });
   } catch (err) {
     console.error(err);
@@ -186,7 +185,7 @@ $("rewrite-form").addEventListener("submit", async (e) => {
   if (text.trim() === current.text.trim()) { $("rewrite-error").textContent = "Nothing has changed yet. Edit the text, then regrade."; $("rewrite-error").hidden = false; return; }
   $("result").appendChild($("pages"));
   const prev = current;
-  await runGrade({ text, name: prev.name, tone: prev.tone, label: "your rewrite", previous: prev, onFail: "rewrite" });
+  await runGrade({ text, name: prev.name, label: "your rewrite", previous: prev, onFail: "rewrite" });
   if ($("rewrite").hidden === false) $("rewrite-pages").appendChild($("pages"));
 });
 
@@ -283,12 +282,14 @@ function loadJsPdf() {
   });
   return jspdfP;
 }
-$("dl-pdf").addEventListener("click", async () => {
-  const btn = $("dl-pdf"); btn.disabled = true; btn.textContent = "Making PDF";
+// One Download button: a single page saves as an image (easy to share), several pages as a PDF.
+$("download").addEventListener("click", async () => {
+  if (result.canvases.length === 1) return download(result.blobs[0], `${result.slug}-graded.png`);
+  const btn = $("download"); btn.disabled = true; btn.textContent = "Making PDF";
   try {
     const JsPDF = await loadJsPdf();
     let pdf = null;
-    result.canvases.forEach((c, i) => {
+    result.canvases.forEach((c) => {
       const w = c.width * 0.36, h = c.height * 0.36;       // px -> pt at 200 dpi
       if (!pdf) pdf = new JsPDF({ unit: "pt", format: [w, h], orientation: w > h ? "l" : "p", compress: true });
       else pdf.addPage([w, h], w > h ? "l" : "p");
@@ -296,17 +297,7 @@ $("dl-pdf").addEventListener("click", async () => {
     });
     download(pdf.output("blob"), `${result.slug}-graded.pdf`);
   } catch (err) { alert(err.message); }
-  btn.disabled = false; btn.textContent = "Download PDF";
-});
-$("dl-png").addEventListener("click", async () => {
-  if (result.canvases.length === 1) return download(result.blobs[0], `${result.slug}-graded.png`);
-  // several pages: stack them into one tall image
-  const gap = 40, W = Math.max(...result.canvases.map(c => c.width));
-  const H = result.canvases.reduce((s, c) => s + c.height, 0) + gap * (result.canvases.length - 1);
-  const big = document.createElement("canvas"); big.width = W; big.height = H;
-  const g = big.getContext("2d"); g.fillStyle = "#e3e8ef"; g.fillRect(0, 0, W, H);
-  let y = 0; for (const c of result.canvases) { g.drawImage(c, (W - c.width) / 2, y); y += c.height + gap; }
-  big.toBlob(b => download(b, `${result.slug}-graded.png`), "image/png");
+  btn.disabled = false; btn.textContent = "Download";
 });
 $("share").addEventListener("click", async () => {
   try {

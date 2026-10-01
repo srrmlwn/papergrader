@@ -22,5 +22,6 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done.
 ## Done
 - Red-pen markup engine with in-page note placement
 - PDF, image (OCR), Word (.docx), plain text and pasted text inputs
-- Passcode gate, Strict / Fair / Kind tone, PDF and PNG downloads
+- Passcode gate
+- Simplified: one Download button (image for one page, PDF for several); one grader voice (no Strict / Fair / Kind)
 - Deployed on Vercel from this repo (auto-deploys on push to `main`)

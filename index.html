@@ -48,15 +48,6 @@
       <textarea id="paste" class="paste" rows="5" spellcheck="false" placeholder="An email, a cover letter, an essay..."></textarea>
       <p class="paste-meta" id="paste-meta" hidden></p>
 
-      <fieldset class="tone">
-        <legend>How tough should the grader be?</legend>
-        <div class="tone-options">
-          <label><input type="radio" name="tone" value="strict"><span>Strict</span></label>
-          <label><input type="radio" name="tone" value="fair" checked><span>Fair</span></label>
-          <label><input type="radio" name="tone" value="kind"><span>Kind</span></label>
-        </div>
-      </fieldset>
-
       <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
       <p id="upload-error" class="error" role="alert" hidden></p>
     </form>
@@ -79,8 +70,7 @@
       </p>
       <div class="actions">
         <button class="btn" id="rewrite-open">Turn in a rewrite</button>
-        <button class="btn btn-quiet" id="dl-pdf">Download PDF</button>
-        <button class="btn btn-quiet" id="dl-png">Save as image</button>
+        <button class="btn btn-quiet" id="download">Download</button>
         <button class="btn btn-quiet" id="copy-comments">Copy comments</button>
         <button class="btn btn-quiet" id="share" hidden>Share</button>
         <button class="btn btn-quiet" id="again">Grade another paper</button>
