@@ -10,7 +10,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done.
 | 3 | [x] | Rewrite and regrade loop | Claude | Done: "Turn in a rewrite" opens an editor (original text, or PDF/photo text rebuilt into paragraphs) with the comments below; regrade is independent of the old grade; result shows "C → B+" and how many marked problems are gone. Repeatable. |
 | 4 | [ ] | Test on iPhone Safari with real phone photos | **[You]** test, Claude fixes | Photo of a printed page (HEIC), a skewed shot, a multi-page PDF, paste, Word. Report anything odd. |
 | 5 | [ ] | Usage, cost and quality logging + "flag this comment" | **[You]** add storage, Claude builds | You add an Upstash Redis (or Vercel KV) integration in Vercel; Claude logs grades, cost, dropped/unmatched notes, flags. |
-| 6 | [ ] | "What is this?" document type (essay, work email, resume, cover letter, other) | Claude | Grades against the right standard for the kind of writing. |
+| 6 | [x] | "What is it?" document type | Claude | Done: Essay / Work writing / Resume / Not sure on the upload screen; each sends its own grading standard; kept on rewrites. |
 | 7 | [ ] | Privacy note | Claude | Text goes to Anthropic for grading; nothing is stored (update if #5 stores anything). |
 | 8 | [ ] | Pick the final name and domain | **[You]** decide/buy, Claude updates the app | Candidate: "Handed Back". Check domain + USPTO. Rename repo/Vercel project if wanted. |
 | 9 | [ ] | Branded share image + link back | Claude | Small "graded by [name]" mark on downloads/shares. After #8. |

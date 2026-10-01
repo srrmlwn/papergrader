@@ -10,6 +10,13 @@ const TONES = {
   kind: "Encouraging. Frame problems as fixes and give generous (but earned) praise. Still flag every real error.",
 };
 
+const KINDS = {
+  essay: "An essay, article or school paper. Judge the thesis, argument, evidence, structure and flow, then mechanics.",
+  work: "Work writing: an email, memo, report or announcement. Judge clarity, brevity, tone for the audience, whether the point or ask is up front and easy to scan, then mechanics. Shorter is better.",
+  resume: "A resume or cover letter. Judge specific, quantified accomplishments, strong active verbs, consistent tense and formatting, concision, and any error that would get it rejected. Standard resume fragments (no subject, no articles) are fine; don't mark them.",
+  other: "Work out what kind of writing this is and grade it by the standard a sharp reader of that kind of writing would use.",
+};
+
 const ANCHOR = {
   type: "object",
   additionalProperties: false,
@@ -99,6 +106,7 @@ export default async function handler(req, res) {
 
   const pages = Array.isArray(body.pages) ? body.pages.slice(0, MAX_PAGES) : [];
   const tone = TONES[body.tone] ? body.tone : "fair";
+  const kind = KINDS[body.kind] ? body.kind : "other";
   let total = 0;
   const doc = pages.map((p, i) => {
     let t = String(p.text || "");
@@ -108,7 +116,7 @@ export default async function handler(req, res) {
   }).join("\n");
   if (!total) return send(res, 400, { error: "No readable text was found in that document." });
 
-  const user = `Grader voice: ${TONES[tone]}\nFile name: ${String(body.name || "document").slice(0, 80)}\n\n<document>\n${doc}\n</document>\n\nGrade this document.`;
+  const user = `Grader voice: ${TONES[tone]}\nWhat this is: ${KINDS[kind]}\nFile name: ${String(body.name || "document").slice(0, 80)}\n\n<document>\n${doc}\n</document>\n\nGrade this document.`;
 
   let r;
   try {

@@ -124,7 +124,9 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 
 /* tone: the chosen option gets circled in red, same as the marks on a paper */
 .tone { border: 0; margin: 0; padding: 0; }
-.tone-options { display: flex; gap: 28px; flex-wrap: wrap; }
+.tone + .tone { margin-top: calc(var(--line) / 2); }
+
+.tone-options { display: flex; gap: 0 28px; flex-wrap: wrap; }
 .tone-options label { position: relative; cursor: pointer; font-size: 19px; padding: 0 6px; }
 .tone-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .tone-options span { position: relative; }

@@ -85,11 +85,12 @@ $("upload-form").addEventListener("submit", async (e) => {
     $("upload-error").hidden = false; return;
   }
   const name = chosen ? chosen.name : "Pasted text";
-  const tone = new FormData(e.target).get("tone") || "fair";
-  await runGrade({ file: chosen, text: pasted, name, tone, label: chosen ? chosen.name : "your writing", onFail: "upload" });
+  const form = new FormData(e.target);
+  const tone = form.get("tone") || "fair", kind = form.get("kind") || "other";
+  await runGrade({ file: chosen, text: pasted, name, tone, kind, label: chosen ? chosen.name : "your writing", onFail: "upload" });
 });
 
-async function runGrade({ file, text, name, tone, label, previous = null, onFail }) {
+async function runGrade({ file, text, name, tone, kind = "other", label, previous = null, onFail }) {
   $("working-name").textContent = label;
   show("working");
   const status = (s) => { $("status").textContent = s; };
@@ -102,7 +103,7 @@ async function runGrade({ file, text, name, tone, label, previous = null, onFail
     status(previous ? "Grading your rewrite" : "Grading your paper");
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passcode, tone, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
+      body: JSON.stringify({ passcode, tone, kind, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
@@ -131,7 +132,7 @@ async function runGrade({ file, text, name, tone, label, previous = null, onFail
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
     const editable = editableText(doc);
     const compare = previous ? compareRounds(previous, editable) : null;
-    current = { name, tone, text: editable, header, comments, round };
+    current = { name, tone, kind, text: editable, header, comments, round };
     await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated, comments, pages: doc.pages.length, compare });
   } catch (err) {
     console.error(err);
@@ -186,7 +187,7 @@ $("rewrite-form").addEventListener("submit", async (e) => {
   if (text.trim() === current.text.trim()) { $("rewrite-error").textContent = "Nothing has changed yet. Edit the text, then regrade."; $("rewrite-error").hidden = false; return; }
   $("result").appendChild($("comments-section"));
   const prev = current;
-  await runGrade({ text, name: prev.name, tone: prev.tone, label: "your rewrite", previous: prev, onFail: "rewrite" });
+  await runGrade({ text, name: prev.name, tone: prev.tone, kind: prev.kind, label: "your rewrite", previous: prev, onFail: "rewrite" });
   if ($("rewrite").hidden === false) $("rewrite-comments").appendChild($("comments-section"));
 });
 
