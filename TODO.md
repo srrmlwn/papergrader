@@ -19,9 +19,16 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 | 11 | [ ] | Better waiting screen | Claude | Real progress steps during the 20 to 60 s grade. |
 | 12 | [ ] | End comment on multi-page papers | Claude | Short end note on page 1 too, or a cover note; today it's only on the last page. |
 
+## Later (not now: no premature optimization)
+- **Cost: fewer, shorter comments.** Cap at 3 to 5 per page, shorter notes, shorter bracket anchors. Est. 20 to 35% cheaper.
+- **Cost: try Haiku 4.5.** Half the price of Sonnet 5.5; set `GRADER_MODEL` in Vercel. Compare on ~5 real papers first (risk: more invented or nitpicky errors).
+- **Cost: lower the page cap** from 8 to 5 to bound the worst case.
+- Skipped: prompt caching (saves a fraction of a cent), Batch API (too slow), caching repeat documents (needs a database).
+
 ## Done
 - Red-pen markup engine with in-page note placement
 - PDF, image (OCR), Word (.docx), plain text and pasted text inputs
 - Passcode gate
 - Simplified: one Download button (image for one page, PDF for several); one grader voice (no Strict / Fair / Kind)
 - Deployed on Vercel from this repo (auto-deploys on push to `main`)
+- Clear "usage limit reached" message when the monthly spend limit is hit
