@@ -6,8 +6,8 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done.
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
 | 1 | [ ] | Set a monthly spend limit on the Anthropic workspace | **[You]** | Console → workspace → Limits. Caps the worst case if the passcode leaks. 2 min. |
-| 2 | [ ] | Comments as a text list under each page | Claude | Copyable fixes, screen-reader friendly, shows notes that didn't fit on the page. |
-| 3 | [ ] | Rewrite and regrade loop | Claude | "Turn in a rewrite": edit the text, regrade, show the grade change. Builds on #2. |
+| 2 | [x] | Comments as a text list under each page | Claude | Done: list below the pages, linked from the top; fixes shown with arrows; notes that didn't fit or couldn't be matched are labeled; Copy all comments. |
+| 3 | [~] | Rewrite and regrade loop | Claude | "Turn in a rewrite": edit the text, regrade, show the grade change. Builds on #2. |
 | 4 | [ ] | Test on iPhone Safari with real phone photos | **[You]** test, Claude fixes | Photo of a printed page (HEIC), a skewed shot, a multi-page PDF, paste, Word. Report anything odd. |
 | 5 | [ ] | Usage, cost and quality logging + "flag this comment" | **[You]** add storage, Claude builds | You add an Upstash Redis (or Vercel KV) integration in Vercel; Claude logs grades, cost, dropped/unmatched notes, flags. |
 | 6 | [ ] | "What is this?" document type (essay, work email, resume, cover letter, other) | Claude | Grades against the right standard for the kind of writing. |

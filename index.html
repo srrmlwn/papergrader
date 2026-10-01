@@ -80,8 +80,18 @@
         <button class="btn btn-quiet" id="again">Grade another paper</button>
       </div>
       <p class="aside" id="result-notes"></p>
+      <p class="aside"><a href="#comments-section" id="comments-link" class="jump" hidden></a></p>
     </div>
     <div class="pages" id="pages"></div>
+
+    <section id="comments-section" class="comments-section" hidden aria-labelledby="comments-title">
+      <div class="comments-head">
+        <h2 id="comments-title" class="comments-title">The comments</h2>
+        <button class="btn btn-quiet" id="copy-comments" type="button">Copy all comments</button>
+      </div>
+      <p class="comments-summary" id="comments-summary"></p>
+      <div id="comments"></div>
+    </section>
   </section>
 
   <footer class="foot">

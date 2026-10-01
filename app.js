@@ -109,13 +109,18 @@ $("upload-form").addEventListener("submit", async (e) => {
       verdict: g.verdict || "", summary: g.summary || "",
     };
     const canvases = []; let dropped = 0, missing = 0;
+    const order = new Map((g.issues || []).map((x, k) => [x, k]));
+    const comments = [];
     for (let i = 0; i < doc.pages.length; i++) {
       status(doc.pages.length > 1 ? `Marking up page ${i + 1} of ${doc.pages.length}` : "Marking it up");
       const issues = (g.issues || []).filter(x => (x.page || 1) === i + 1);
       const out = await markPage(doc.pages[i], issues, { index: i, count: doc.pages.length, header });
       canvases.push(out.canvas); dropped += out.dropped.length; missing += out.missing.length;
+      for (const [list, status] of [[out.placed, "placed"], [out.dropped, "dropped"], [out.missing, "missing"]])
+        for (const x of list) comments.push({ ...x, page: i + 1, status, k: order.get(x) ?? 999 });
     }
-    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated });
+    comments.sort((a, b) => a.page - b.page || a.k - b.k);
+    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated, comments, pages: doc.pages.length });
   } catch (err) {
     console.error(err);
     show("upload");
@@ -135,6 +140,7 @@ async function showResult(canvases, header, info) {
     const a = document.createElement("a");          // tap to open full size (zoomable on phones)
     a.href = img.src; a.target = "_blank"; a.rel = "noopener";
     a.title = "Open full size"; a.appendChild(img);
+    img.addEventListener("load", syncRhythm);
     box.appendChild(a);
   });
   $("result-title").textContent = `${header.title}: ${header.grade}`;
@@ -144,13 +150,97 @@ async function showResult(canvases, header, info) {
   if (info.dropped) notes.push(`${info.dropped} minor ${info.dropped === 1 ? "note was" : "notes were"} left off because the page ran out of room.`);
   if (info.missing) notes.push(`${info.missing} ${info.missing === 1 ? "comment" : "comments"} couldn't be matched to the text and ${info.missing === 1 ? "was" : "were"} skipped.`);
   $("result-notes").textContent = notes.join(" ");
+  renderComments(header, info.comments || [], info.pages || canvases.length);
   const slug = header.title.replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "paper";
   result = { canvases, blobs, slug };
   const file0 = new File([blobs[0]], `${slug}-graded.png`, { type: "image/png" });
   $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [file0] }));
   show("result");
+  syncRhythm();
   window.scrollTo({ top: 0 });
 }
+
+// keep text after the page images on the ruled lines: the images have arbitrary heights,
+// so pad below them until the next element starts on the same rhythm as the header text.
+const LINE = 32;
+function syncRhythm() {
+  const pages = $("pages"), ref = $("result-title");
+  if (!pages || $("result").hidden) return;
+  pages.style.paddingBottom = "0px";
+  const off = (pages.getBoundingClientRect().bottom - ref.getBoundingClientRect().top) % LINE;
+  pages.style.paddingBottom = `${(LINE - off) % LINE}px`;
+}
+window.addEventListener("resize", syncRhythm);
+
+// ---------- comments as text ----------
+const STATUS_TEXT = {
+  dropped: "Not written on the page (no room)",
+  missing: "Couldn't find this exact text on the page",
+};
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function snippet(s, n = 70) { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+function renderComments(header, comments, pageCount) {
+  const box = $("comments"); box.innerHTML = "";
+  $("comments-link").hidden = !comments.length;
+  $("comments-section").hidden = !comments.length;
+  if (!comments.length) return;
+  $("comments-link").textContent = `Read all ${comments.length} comments as text`;
+  $("comments-summary").textContent = [header.verdict, header.summary].filter(Boolean).join(" ");
+  let list = null, lastPage = 0;
+  for (const c of comments) {
+    if (pageCount > 1 && c.page !== lastPage) {
+      box.appendChild(el("h3", "c-page", `Page ${c.page}`));
+      list = null; lastPage = c.page;
+    }
+    if (!list) { list = el("ol", "c-list"); box.appendChild(list); }
+    const li = el("li", "c-item" + (c.kind === "praise" ? " c-praise" : ""));
+    const quote = el("p", "c-quote");
+    quote.appendChild(el("q", null, snippet(c.anchor)));
+    if (c.insert && c.insert.trim()) {
+      quote.appendChild(document.createTextNode(" "));
+      quote.appendChild(el("span", "c-arrow", "→"));
+      quote.appendChild(document.createTextNode(" "));
+      quote.appendChild(el("span", "c-fix", c.insert.trim()));
+    }
+    li.appendChild(quote);
+    li.appendChild(el("p", "c-note", c.note));
+    if (STATUS_TEXT[c.status]) li.appendChild(el("p", "c-status", STATUS_TEXT[c.status]));
+    list.appendChild(li);
+  }
+  result_comments = { header, comments, pageCount };
+}
+let result_comments = null;
+
+function commentsAsText() {
+  const { header, comments, pageCount } = result_comments;
+  const out = [`${header.title}: ${header.grade} (-${header.points} pts)`];
+  if (header.verdict) out.push(header.verdict);
+  if (header.summary) out.push(header.summary);
+  let last = 0;
+  for (const c of comments) {
+    if (pageCount > 1 && c.page !== last) { out.push("", `Page ${c.page}`); last = c.page; }
+    else if (last === 0) { out.push(""); last = c.page; }
+    const fix = c.insert && c.insert.trim() ? ` -> ${c.insert.trim()}` : "";
+    out.push(`- "${snippet(c.anchor, 120)}"${fix}: ${c.note}`);
+  }
+  return out.join("\n");
+}
+$("copy-comments").addEventListener("click", async () => {
+  const btn = $("copy-comments");
+  try {
+    await navigator.clipboard.writeText(commentsAsText());
+    btn.textContent = "Copied";
+  } catch {
+    btn.textContent = "Couldn't copy";
+  }
+  setTimeout(() => { btn.textContent = "Copy all comments"; }, 1800);
+});
 
 // ---------- downloads ----------
 function download(blob, name) {

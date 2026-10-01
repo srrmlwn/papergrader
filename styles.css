@@ -149,5 +149,25 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 .pages a:focus-visible { outline: 3px solid #2f6fd6; outline-offset: 4px; }
 .pages img { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 1px 2px rgba(40,50,70,.18), 0 8px 24px rgba(40,50,70,.12); }
 
+/* comments as text: typed on the same ruled paper, one ruled line per text line */
+.jump { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.jump:focus-visible { outline: 3px solid #2f6fd6; outline-offset: 2px; }
+.comments-section { margin-top: calc(var(--line) * 2); scroll-margin-top: var(--line); }
+.comments-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.comments-title { margin: 0; font: 700 40px/calc(var(--line) * 2) var(--hand); color: var(--ink); }
+.comments-summary { margin: 0 0 var(--line); max-width: 62ch; }
+.c-page { margin: var(--line) 0 0; font: 700 26px/var(--line) var(--hand); color: var(--ink); }
+.c-list { margin: 0; padding-left: 2.2em; }
+.c-item { margin: 0 0 var(--line); max-width: 64ch; }
+.c-item::marker { color: var(--faint); }
+.c-item p { margin: 0; }
+.c-quote q { font-style: italic; }
+.c-quote q::before { content: "\201C"; } .c-quote q::after { content: "\201D"; }
+.c-arrow { color: var(--ink); }
+.c-fix { color: var(--ink); font-weight: 700; }
+.c-note { color: var(--ink); font: 700 23px/var(--line) var(--hand); }
+.c-praise .c-note::before { content: "\2713  "; }
+.c-status { color: var(--faint); font-size: 14px; }
+
 .foot { margin-top: calc(var(--line) * 2); color: var(--faint); font-size: 14px; max-width: 62ch; }
 .foot p { margin: 0; }
