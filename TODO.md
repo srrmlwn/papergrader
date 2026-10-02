@@ -14,7 +14,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 | 6 | [x] | Grade by the right standard for the kind of writing | Claude | Done (simplified): no question on screen; the grader works out whether it is an essay, work writing or a resume and uses that standard. |
 | 7 | [x] | Privacy note | Claude | Done: "Your document isn't stored" in the footer (opens the full note). Server no longer logs any document text. **Update this note if #5 stores anything.** |
 | 8 | [ ] | Pick the final name and domain | **[You]** decide/buy, Claude updates the app | Candidate: "Handed Back". Check domain + USPTO. Rename repo/Vercel project if wanted. |
-| 9 | [ ] | Branded share image + link back | Claude | **Next up.** A post-ready image: grade, a cropped strip of red ink, the best comment as a pull quote, the site address. Can ship with "Paper Grader" and swap the name later. |
+| 9 | [x] | Branded share image + link back | Claude | Done: Share makes a 1080×1350 image (grade stamp, the strip of the paper with the most red ink, the verdict, the sharpest criticism as a pull quote, the site address). Phones open the share sheet; desktops save the PNG. Name is in `share.js`, swap it with #8. |
 | 10 | [ ] | Web links as input | Claude | Server fetch + Readability, typeset like pasted text; block private addresses. |
 | 11 | [x] | Better waiting screen | Claude | Done: rotating teacher lines while the grader works (no fake progress bar), then "Writing in the margins". |
 | 12 | [ ] | End comment on multi-page papers | Claude | Short end note on page 1 too, or a cover note; today it's only on the last page. |

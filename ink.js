@@ -416,6 +416,9 @@ export async function markPage(page, issues, meta) {
   const c = canvas.getContext("2d");
   c.drawImage(out.base, 0, 0);
   c.filter = "blur(0.6px)"; c.drawImage(out.ink, 0, 0); c.filter = "none";
+  // for the share card's crop: where the end comment starts, and the bottom of the page-1 header
+  canvas.summaryTop = out.summaryTop;
+  canvas.headerBottom = meta.index === 0 ? top - 20 : 0;
   return { canvas, placed, dropped, missing };
 }
 
@@ -442,8 +445,9 @@ function placeSummary({ base, ink, W, H }, space, words, side, h) {
   }
   const ic = ink.getContext("2d");
   drawLines(ic, [h.verdict], vs, x, y);
+  const summaryTop = y - 10;
   drawLines(ic, lines, ss, x, y + vs * 1.2);
-  return { base, ink, W, H };
+  return { base, ink, W, H, summaryTop };
 }
 
 // Top edge of the content: the first row with real ink across the text column, so titles,
@@ -469,3 +473,13 @@ function whiten(ctx, W, H) {                  // scanner-gray / off-white paper 
   }
   ctx.putImageData(img, 0, 0);
 }
+
+// ---------- helpers reused by the share card ----------
+export function drawStamp(ctx, cx, cy, grade, scale = 1) {
+  rand = makeRng(42);
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale);
+  stamp(ctx, 0, 0, grade);
+  ctx.restore();
+}
+export function wrapText(ctx, text, sz, maxw) { return wrap(ctx, text, sz, maxw); }
+export const handFont = font;

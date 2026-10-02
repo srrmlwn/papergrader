@@ -1,5 +1,6 @@
 import { readFile, readText, pageText, MAX_PAGES } from "./readers.js";
 import { markPage } from "./ink.js";
+import { makeShareCard } from "./share.js";
 
 const JSPDF = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
 const $ = (id) => document.getElementById(id);
@@ -196,8 +197,7 @@ async function showResult(canvases, header, info) {
   $("result-notes").textContent = notes.length ? notes.join(". ") + "." : "";
   const slug = header.title.replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "paper";
   result = { canvases, blobs, slug };
-  const file0 = new File([blobs[0]], `${slug}-graded.png`, { type: "image/png" });
-  $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [file0] }));
+  result.card = null;   // the share image is made on first Share click
   show("result");
   window.scrollTo({ top: 0 });
 }
@@ -293,10 +293,29 @@ $("download").addEventListener("click", async () => {
   } catch (err) { alert(err.message); }
   btn.disabled = false; btn.textContent = "Download";
 });
+// Share: a post-ready image (grade, the reddest strip of the paper, the best comment, the
+// site address). Opens the share sheet where the browser supports sharing images; otherwise saves it.
 $("share").addEventListener("click", async () => {
+  const btn = $("share");
+  const label = "Share";
   try {
-    await navigator.share({ files: [new File([result.blobs[0]], `${result.slug}-graded.png`, { type: "image/png" })], title: "Graded paper" });
-  } catch { /* user cancelled */ }
+    btn.disabled = true; btn.textContent = "Making image";
+    if (!result.card) result.card = await makeShareCard({ canvases: result.canvases, header: current.header, comments: current.comments });
+    const file = new File([result.card], `${result.slug}-graded-share.png`, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      btn.disabled = false; btn.textContent = label;
+      await navigator.share({ files: [file], title: "My paper, graded" });
+      return;
+    }
+    download(result.card, file.name);
+    btn.textContent = "Image saved";
+    setTimeout(() => { btn.textContent = label; }, 2200);
+  } catch (err) {
+    if (err && err.name !== "AbortError") console.error(err);   // AbortError = the person closed the share sheet
+    btn.textContent = label;
+  } finally {
+    btn.disabled = false;
+  }
 });
 $("again").addEventListener("click", () => {
   current = null;
