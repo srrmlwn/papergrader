@@ -16,7 +16,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 | 8 | [ ] | Pick the final name and domain | **[You]** decide/buy, Claude updates the app | Candidate: "Handed Back". Check domain + USPTO. Rename repo/Vercel project if wanted. |
 | 9 | [ ] | Branded share image + link back | Claude | Small "graded by [name]" mark on downloads/shares. After #8. |
 | 10 | [ ] | Web links as input | Claude | Server fetch + Readability, typeset like pasted text; block private addresses. |
-| 11 | [ ] | Better waiting screen | Claude | Real progress steps during the 20 to 60 s grade. |
+| 11 | [x] | Better waiting screen | Claude | Done: three steps ticked off in the margin with a running clock, the plain page shown while it is graded, then the marks inked onto page 1 in writing order and the grade and verdict written in last. |
 | 12 | [ ] | End comment on multi-page papers | Claude | Short end note on page 1 too, or a cover note; today it's only on the last page. |
 
 ## Later (not now: no premature optimization)

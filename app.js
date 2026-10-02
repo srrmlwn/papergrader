@@ -1,10 +1,21 @@
 import { readFile, readText, pageText, MAX_PAGES } from "./readers.js";
-import { markPage } from "./ink.js";
+import { preparePage, markPage } from "./ink.js";
 
 const JSPDF = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
 const $ = (id) => document.getElementById(id);
 const views = ["gate", "upload", "working", "result"];
-const show = (v) => views.forEach(id => { $(id).hidden = id !== v; });
+// Show one view and move focus to its heading, so keyboard and screen reader users know where they are.
+function show(v, { focus = true } = {}) {
+  views.forEach(id => { $(id).hidden = id !== v; });
+  $("pages").hidden = v !== "working" && v !== "result";
+  if (focus) $(v).querySelector("[tabindex='-1']")?.focus({ preventScroll: true });
+}
+// One quiet live region for screen readers: step changes and confirmations, nothing chattier.
+function announce(msg) {
+  const a = $("announce"); a.textContent = "";
+  setTimeout(() => { a.textContent = msg; }, 60);
+}
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -88,70 +99,110 @@ $("upload-form").addEventListener("submit", async (e) => {
   await runGrade({ file: chosen, text: pasted, name, label: chosen ? chosen.name : "your writing" });
 });
 
+// ---------- the working screen: three steps, with the current one spelled out ----------
+const STEPS = ["read", "grade", "mark"];
+const LABEL = { read: "Reading your paper", grade: "Grading it", mark: "Marking it up" };
+let stepNow = null;
+function step(name, text = LABEL[name]) {
+  const at = STEPS.indexOf(name);
+  $("steps").querySelectorAll("li").forEach((li, i) => {
+    li.className = i < at ? "done" : i === at ? "now" : "";
+    li.querySelector(".step-text").textContent = i === at ? text : LABEL[STEPS[i]];
+  });
+  if (name !== stepNow) { stepNow = name; announce(LABEL[name]); }
+}
+const clock = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+
+// the plain pages, shown while the paper is graded (the marks are inked onto page 1 after)
+function showPaper(canvases) {
+  const box = $("pages"); box.replaceChildren(...canvases.map(c => {
+    const slot = document.createElement("div"); slot.className = "page-slot"; slot.append(c); return slot;
+  }));
+  box.setAttribute("aria-hidden", "true");
+  syncRhythm();
+}
+
 async function runGrade({ file, text, name, label }) {
   $("working-name").textContent = label;
+  stepNow = null; step("read");
+  $("pages").replaceChildren();
   show("working");
-  const status = (s) => { $("status").textContent = s; };
+  let timer = 0;
   try {
     await document.fonts.load('34px "Caveat"');
-    const doc = file ? await readFile(file, status) : await readText(text, status);
+    const doc = file ? await readFile(file, (s) => step("read", s)) : await readText(text, (s) => step("read", s));
     const texts = doc.pages.map(p => pageText(p.words));
     if (!texts.join("").trim()) throw new Error("No readable text was found. If this is a photo, try a sharper, straighter shot.");
+    const preps = doc.pages.map((p, i) => preparePage(p, i));
+    showPaper(preps.map(p => p.base));
 
-    status("Grading your paper");
+    const t0 = Date.now();
+    step("grade", `Grading it  ${clock(0)}`);
+    timer = setInterval(() => step("grade", `Grading it  ${clock(Date.now() - t0)}`), 1000);
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ passcode, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
+    clearInterval(timer);
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
     if (!r.ok) throw new Error(g.error || "Grading failed. Try again.");
 
-    status("Marking it up");
+    step("mark");
     const header = {
       title: g.title || name.replace(/\.[^.]+$/, ""),
       grade: g.grade || "?", points: Math.max(0, g.points | 0),
       verdict: g.verdict || "", summary: g.summary || "",
     };
-    const canvases = []; let dropped = 0, missing = 0;
+    const canvases = []; let dropped = 0, missing = 0, pen = null;
     const order = new Map((g.issues || []).map((x, k) => [x, k]));
     const comments = [];
     for (let i = 0; i < doc.pages.length; i++) {
-      status(doc.pages.length > 1 ? `Marking up page ${i + 1} of ${doc.pages.length}` : "Marking it up");
+      if (doc.pages.length > 1) step("mark", `Marking up page ${i + 1} of ${doc.pages.length}`);
       const issues = (g.issues || []).filter(x => (x.page || 1) === i + 1);
-      const out = await markPage(doc.pages[i], issues, { index: i, count: doc.pages.length, header });
+      const out = await markPage(preps[i], issues, { index: i, count: doc.pages.length, header });
+      preps[i] = null;
       canvases.push(out.canvas); dropped += out.dropped.length; missing += out.missing.length;
+      if (i === 0) pen = { base: out.base, ink: out.ink, strokes: out.strokes };   // only page 1 is inked in live
       for (const [list, st] of [[out.placed, "placed"], [out.dropped, "dropped"], [out.missing, "missing"]])
         for (const x of list) comments.push({ ...x, page: i + 1, status: st, k: order.get(x) ?? 999 });
     }
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
     current = { header, comments };
-    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated });
+    await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated }, pen);
   } catch (err) {
     console.error(err);
     show("upload");
     $("upload-error").textContent = err.message || "Something went wrong. Try again.";
     $("upload-error").hidden = false;
+  } finally {
+    clearInterval(timer);
   }
 }
 
-async function showResult(canvases, header, info) {
+async function showResult(canvases, header, info, pen) {
   const blobs = await Promise.all(canvases.map(c => new Promise(r => c.toBlob(r, "image/png"))));
-  const box = $("pages"); box.innerHTML = "";
+  const count = (p) => current.comments.filter(c => c.page === p && c.status === "placed").length;
+  const box = $("pages"); box.replaceChildren(); box.removeAttribute("aria-hidden");
+  const live = pen && !reduceMotion.matches;
   blobs.forEach((b, i) => {
     const img = new Image();
     img.src = URL.createObjectURL(b);
-    img.alt = `Page ${i + 1} of the graded paper`;
+    const n = count(i + 1);
+    img.alt = `Page ${i + 1} of the graded paper${i === 0 ? `, graded ${header.grade}` : ""}, with ${n} ${n === 1 ? "comment" : "comments"} written on it. Every comment is also under "Read the comments as text".`;
     img.width = canvases[i].width; img.height = canvases[i].height;
     const btn = document.createElement("button");      // tap to view the pages full size, on this tab
     btn.type = "button"; btn.className = "page-btn";
     btn.setAttribute("aria-label", `View page ${i + 1} full size`);
-    btn.addEventListener("click", () => openViewer(i, btn));
-    btn.appendChild(img);
+    btn.addEventListener("click", () => { if (inking) inking.finish(); else openViewer(i, btn); });
+    btn.appendChild(i === 0 && live ? penCanvas(pen, img) : img);
     img.addEventListener("load", syncRhythm);
     box.appendChild(btn);
   });
-  $("result-title").textContent = `${header.title}: ${header.grade}`;
+  $("result-grade").textContent = header.grade;
+  $("result-verdict").textContent = header.verdict;
+  $("result-title").textContent = header.points ? `${header.title} · -${header.points} pts` : header.title;
+  renderComments();
   const notes = [];
   if (info.truncated) notes.push(`Your writing ran past ${MAX_PAGES} pages; only the first ${MAX_PAGES} were graded.`);
   else if (info.total > MAX_PAGES) notes.push(`Only the first ${MAX_PAGES} of ${info.total} pages were graded.`);
@@ -162,22 +213,126 @@ async function showResult(canvases, header, info) {
   result = { canvases, blobs, slug };
   const file0 = new File([blobs[0]], `${slug}-graded.png`, { type: "image/png" });
   $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [file0] }));
+  $("result").classList.toggle("inking", !!live);       // the grade is written in after the page
   show("result");
-  syncRhythm();
   window.scrollTo({ top: 0 });
+  syncRhythm();
+  if (live) penIn(box.querySelector("canvas"), pen, () => $("result").classList.remove("inking"));
+}
+
+// ---------- the pen: ink page 1 in the order the teacher made the marks ----------
+let inking = null;      // { finish } while the pen is moving
+function penCanvas({ base }, img) {
+  const c = document.createElement("canvas");
+  c.width = base.width; c.height = base.height;
+  c.setAttribute("role", "img"); c.setAttribute("aria-label", img.alt);
+  c.getContext("2d").drawImage(base, 0, 0);
+  c.img = img;              // swapped in when the pen is done, so the page can be saved like any image
+  return c;
+}
+function penIn(live, { base, ink, strokes }, done) {
+  const ctx = live.getContext("2d"), W = live.width, H = live.height;
+  // timeline: each stroke takes time for its length, with a beat between marks; long pages speed up
+  const SPEED = 2.2, BEAT = 140, LIFT = 35, MAX = 6500;     // SPEED in canvas px per ms
+  const plan = []; let t = 350;
+  for (const group of strokes) {
+    for (const s of group) {
+      const len = s.ax === "x" ? s.r[2] - s.r[0] : s.r[3] - s.r[1];
+      const d = Math.min(650, Math.max(70, len / SPEED));
+      plan.push({ s, t, d, at: 0 }); t += d + LIFT;
+    }
+    t += BEAT;
+  }
+  const k = t > MAX ? MAX / t : 1;
+  plan.forEach(p => { p.t *= k; p.d *= k; });
+
+  // reveal the stroke's rectangle from `at` to `to` along the pen's direction (base, then ink,
+  // so a slice drawn twice never darkens)
+  const reveal = (p, to) => {
+    const x0 = Math.max(0, Math.floor(p.s.r[0])), y0 = Math.max(0, Math.floor(p.s.r[1]));
+    const x1 = Math.min(W, Math.ceil(p.s.r[2])), y1 = Math.min(H, Math.ceil(p.s.r[3]));
+    const horiz = p.s.ax === "x", len = horiz ? x1 - x0 : y1 - y0;
+    const a = Math.round(len * p.at), b = Math.round(len * to);
+    p.at = to;
+    if (b <= a || len <= 0) return;
+    const from = p.s.dir > 0 ? a : len - b, size = b - a;
+    const [sx, sy, sw, sh] = horiz ? [x0 + from, y0, size, y1 - y0] : [x0, y0 + from, x1 - x0, size];
+    if (sw <= 0 || sh <= 0) return;
+    ctx.drawImage(base, sx, sy, sw, sh, sx, sy, sw, sh);
+    ctx.drawImage(ink, sx, sy, sw, sh, sx, sy, sw, sh);
+  };
+  let start = null, raf = 0;
+  const frame = (now) => {
+    start ??= now;
+    const el = now - start;
+    let more = false;
+    for (const p of plan) {
+      if (p.at >= 1) continue;
+      if (el < p.t) { more = true; break; }
+      const f = Math.min(1, (el - p.t) / p.d);
+      reveal(p, f);
+      if (f < 1) more = true;
+    }
+    if (more) raf = requestAnimationFrame(frame); else finish();
+  };
+  const finish = () => {
+    cancelAnimationFrame(raf);
+    inking = null;
+    if (live.isConnected) live.replaceWith(live.img);
+    done();
+    syncRhythm();
+  };
+  inking = { finish };
+  raf = requestAnimationFrame(frame);
+}
+
+// ---------- the comments as text, for screen readers and anyone revising elsewhere ----------
+function renderComments() {
+  const { header, comments } = current;
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  };
+  const body = $("comments-body"); body.replaceChildren();
+  if (header.summary) body.append(el("p", "end-note", header.summary));
+  const multi = comments.some(c => c.page > 1);
+  let list = null, last = 0;
+  for (const c of comments) {
+    if (c.page !== last) {
+      if (multi) body.append(el("h3", null, `Page ${c.page}`));
+      list = body.appendChild(el("ul")); last = c.page;
+    }
+    const li = el("li");
+    li.append(el("q", null, String(c.anchor).replace(/\s+/g, " ").trim()));
+    if (c.insert && c.insert.trim()) {
+      const to = el("span", "fix");
+      to.append(el("span", "sr-only", " change to "), el("span", null, " → "));
+      to.lastChild.setAttribute("aria-hidden", "true");
+      to.append(el("ins", null, c.insert.trim()));
+      li.append(to);
+    }
+    if (String(c.note || "").trim()) li.append(" ", el("span", "note", c.note));
+    if (c.status !== "placed") li.append(" ", el("span", "off-page", "(not on the page)"));
+    list.append(li);
+  }
+  if (!comments.length) body.append(el("p", null, "No comments. Nothing needed marking."));
+  $("result").querySelector(".comments-text").open = false;
 }
 
 // keep text after the page images on the ruled lines: the images have arbitrary heights,
 // so pad below them until the next element starts on the same rhythm as the header text.
 const LINE = 32;
 function syncRhythm() {
-  const pages = $("pages"), ref = $("result-title");
-  if (!pages || $("result").hidden) return;
+  const pages = $("pages"), ref = document.querySelector(".sheet");
+  if (pages.hidden) return;
   pages.style.paddingBottom = "0px";
   const off = (pages.getBoundingClientRect().bottom - ref.getBoundingClientRect().top) % LINE;
   pages.style.paddingBottom = `${(LINE - off) % LINE}px`;
 }
 window.addEventListener("resize", syncRhythm);
+document.querySelector(".comments-text").addEventListener("toggle", syncRhythm);
 
 // ---------- copy comments as plain text ----------
 function commentsAsText() {
@@ -190,7 +345,8 @@ function commentsAsText() {
   for (const c of comments) {
     if (c.page !== last) { out.push("", multi ? `Page ${c.page}` : "Comments"); last = c.page; }
     const fix = c.insert && c.insert.trim() ? ` -> ${c.insert.trim()}` : "";
-    out.push(`- "${String(c.anchor).replace(/\s+/g, " ").trim()}"${fix}: ${c.note}`);
+    const note = String(c.note || "").trim();
+    out.push(`- "${String(c.anchor).replace(/\s+/g, " ").trim()}"${fix}${note ? `: ${note}` : ""}`);
   }
   return out.join("\n");
 }
@@ -199,8 +355,10 @@ $("copy-comments").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(commentsAsText());
     btn.textContent = "Copied";
+    announce("Comments copied");
   } catch {
     btn.textContent = "Couldn't copy";
+    announce("Couldn't copy the comments");
   }
   setTimeout(() => { btn.textContent = "Copy comments"; }, 1800);
 });
@@ -212,12 +370,13 @@ function openViewer(index, from) {
   list.innerHTML = "";
   result.blobs.forEach((b, i) => {
     const img = new Image();
-    img.src = $("pages").querySelectorAll("img")[i].src;
-    img.alt = `Page ${i + 1} of the graded paper`;
+    const src = $("pages").querySelectorAll("img")[i];
+    img.src = src.src; img.alt = src.alt;
     img.width = result.canvases[i].width; img.height = result.canvases[i].height;
     list.appendChild(img);
   });
   viewerReturnFocus = from || null;
+  document.querySelector("main").inert = true;           // keep Tab inside the viewer
   v.hidden = false;
   document.documentElement.classList.add("viewer-open");
   v.scrollTop = 0;
@@ -227,6 +386,7 @@ function openViewer(index, from) {
 function closeViewer() {
   if ($("viewer").hidden) return;
   $("viewer").hidden = true;
+  document.querySelector("main").inert = false;
   document.documentElement.classList.remove("viewer-open");
   viewerReturnFocus?.focus({ preventScroll: true });
 }
@@ -247,7 +407,7 @@ let jspdfP = null;
 function loadJsPdf() {
   if (!jspdfP) jspdfP = new Promise((res, rej) => {
     const s = document.createElement("script"); s.src = JSPDF;
-    s.onload = () => res(window.jspdf.jsPDF); s.onerror = () => rej(new Error("Couldn't load the PDF maker."));
+    s.onload = () => res(window.jspdf.jsPDF); s.onerror = () => { jspdfP = null; s.remove(); rej(new Error("Couldn't load the PDF maker.")); };
     document.head.appendChild(s);
   });
   return jspdfP;
@@ -266,8 +426,13 @@ $("download").addEventListener("click", async () => {
       pdf.addImage(c.toDataURL("image/jpeg", 0.9), "JPEG", 0, 0, w, h);
     });
     download(pdf.output("blob"), `${result.slug}-graded.pdf`);
-  } catch (err) { alert(err.message); }
-  btn.disabled = false; btn.textContent = "Download";
+    btn.textContent = "Download";
+  } catch (err) {
+    btn.textContent = "Couldn't make the PDF";
+    announce(`${err.message} Try Download again.`);
+    setTimeout(() => { btn.textContent = "Download"; }, 2400);
+  }
+  btn.disabled = false;
 });
 $("share").addEventListener("click", async () => {
   try {
@@ -275,6 +440,7 @@ $("share").addEventListener("click", async () => {
   } catch { /* user cancelled */ }
 });
 $("again").addEventListener("click", () => {
+  inking?.finish();
   current = null;
   clearFile();
   $("paste").value = ""; $("paste").classList.remove("dimmed"); $("paste-meta").hidden = true;
@@ -285,7 +451,7 @@ $("again").addEventListener("click", () => {
 // ---------- start ----------
 (async () => {
   if (passcode) {
-    try { await checkPass(passcode); show("upload"); return; } catch { store.del("pg-pass"); passcode = ""; }
+    try { await checkPass(passcode); show("upload", { focus: false }); return; } catch { store.del("pg-pass"); passcode = ""; }
   }
-  show("gate");
+  show("gate", { focus: false });
 })();
