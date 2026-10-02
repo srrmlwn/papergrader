@@ -75,6 +75,25 @@ const composer = $("composer");
 ["dragleave", "drop"].forEach(t => composer.addEventListener(t, (e) => { e.preventDefault(); composer.classList.remove("drag"); }));
 composer.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); });
 
+// While the grader works (20 to 60 s), show what a teacher would be doing. Not a fake progress bar:
+// the lines just keep the wait from feeling stuck, and stop as soon as the grade comes back.
+const WAIT_LINES = [
+  "Reading it through once",
+  "Reading it again, with the red pen",
+  "Checking the argument holds up",
+  "Circling suspicious commas",
+  "Counting how many times you said \u201cjust\u201d",
+  "Deciding whether that semicolon was necessary",
+  "Looking for something nice to say",
+  "Settling on a grade",
+];
+function rotateLines(status) {
+  let k = 0;
+  const id = setInterval(() => { k = Math.min(k + 1, WAIT_LINES.length - 1); status(WAIT_LINES[k]); }, 4500);
+  status(WAIT_LINES[0]);
+  return () => clearInterval(id);
+}
+
 // ---------- grading ----------
 let current = null;     // the paper on screen: { header, comments }
 
@@ -94,6 +113,7 @@ async function runGrade({ file, text, name, label }) {
   $("working-name").textContent = label;   // what's being graded; the status line below says what's happening
   show("working");
   const status = (s) => { $("status").textContent = s; };
+  let stopLines = () => {};
   try {
     await document.fonts.load('34px "Caveat"');
     const doc = file ? await readFile(file, status) : await readText(text, status);
@@ -101,15 +121,17 @@ async function runGrade({ file, text, name, label }) {
     if (!texts.join("").trim()) throw new Error("No readable text was found. If this is a photo, try a sharper, straighter shot.");
 
     status("Grading your paper");
+    stopLines = rotateLines(status);
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ passcode, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
+    stopLines();
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
     if (!r.ok) throw new Error(g.error || "Grading failed. Try again.");
 
-    status("Marking it up");
+    status("Writing in the margins");
     const header = {
       title: g.title || name.replace(/\.[^.]+$/, ""),
       grade: g.grade || "?", points: Math.max(0, g.points | 0),
@@ -119,7 +141,7 @@ async function runGrade({ file, text, name, label }) {
     const order = new Map((g.issues || []).map((x, k) => [x, k]));
     const comments = [];
     for (let i = 0; i < doc.pages.length; i++) {
-      status(doc.pages.length > 1 ? `Marking up page ${i + 1} of ${doc.pages.length}` : "Marking it up");
+      status(doc.pages.length > 1 ? `Writing in the margins (page ${i + 1} of ${doc.pages.length})` : "Writing in the margins");
       const issues = (g.issues || []).filter(x => (x.page || 1) === i + 1);
       const out = await markPage(doc.pages[i], issues, { index: i, count: doc.pages.length, header });
       canvases.push(out.canvas); dropped += out.dropped.length; missing += out.missing.length;
@@ -130,6 +152,7 @@ async function runGrade({ file, text, name, label }) {
     current = { header, comments };
     await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated });
   } catch (err) {
+    stopLines();
     console.error(err);
     show("upload");
     $("upload-error").textContent = err.message || "Something went wrong. Try again.";
@@ -152,7 +175,8 @@ async function showResult(canvases, header, info) {
     btn.appendChild(img);
     box.appendChild(btn);
   });
-  $("result-title").textContent = `${header.title}: ${header.grade}`;
+  $("result-title").textContent = header.title;
+  $("result-grade").textContent = header.grade;
   const notes = [];
   if (info.truncated) notes.push(`Your writing ran past ${MAX_PAGES} pages; only the first ${MAX_PAGES} were graded.`);
   else if (info.total > MAX_PAGES) notes.push(`Only the first ${MAX_PAGES} of ${info.total} pages were graded.`);

@@ -40,7 +40,7 @@
     <form id="upload-form">
       <div class="composer" id="composer">
         <label class="sr-only" for="paste">Your writing</label>
-        <textarea id="paste" class="paste" rows="8" spellcheck="false" placeholder="Paste your writing here, or drop a file."></textarea>
+        <textarea id="paste" class="paste" rows="4" spellcheck="false" placeholder="Paste your writing here, or drop a file."></textarea>
         <div class="file-chip" id="file-chip" hidden>
           <span class="file-name" id="file-name"></span>
           <button type="button" class="file-remove" id="file-remove" aria-label="Remove file">×</button>
@@ -54,6 +54,13 @@
         </div>
       </div>
 
+      <details class="privacy">
+        <summary><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none"/></svg>Your document isn't stored.</summary>
+        <p>Your file is opened in your browser. Only its text is sent to Anthropic's Claude API to be graded, and the graded pages are drawn in your browser.</p>
+        <p>This app doesn't save your writing, your comments or your grades. Anthropic doesn't use API data to train its models by default.</p>
+        <p>Don't upload anything you aren't allowed to share, like other people's private information.</p>
+      </details>
+
       <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
       <p id="upload-error" class="error" role="alert" hidden></p>
     </form>
@@ -63,32 +70,28 @@
   <section id="working" class="view" hidden aria-live="polite">
     <p class="lede" id="working-name"></p>
     <p class="status"><span id="status">Reading your document</span><span class="caret" aria-hidden="true"></span></p>
-    <p class="aside">Grading usually takes 20 to 60 seconds. Keep this page open.</p>
+    <p class="aside">Usually 20 to 60 seconds. Keep this page open.</p>
   </section>
 
   <!-- 4. result -->
   <section id="result" class="view" hidden>
     <div class="result-head">
-      <p class="lede lede-small" id="result-title"></p>
-      <div class="actions">
-        <button class="btn" id="download">Download</button>
-        <button class="btn btn-quiet" id="copy-comments">Copy comments</button>
-        <button class="btn btn-quiet" id="share" hidden>Share</button>
-        <button class="btn btn-quiet" id="again">Grade another paper</button>
-      </div>
+      <h2 class="result-title"><span id="result-title"></span><span class="result-grade" id="result-grade"></span></h2>
       <p class="aside" id="result-notes"></p>
     </div>
     <div class="pages" id="pages"></div>
+    <div class="action-bar" role="toolbar" aria-label="What to do with your graded paper">
+      <div class="action-bar-inner">
+        <button class="btn" id="download">Download</button>
+        <button class="btn btn-quiet" id="share" hidden>Share</button>
+        <button class="btn btn-quiet" id="copy-comments">Copy comments</button>
+        <button class="link-btn" id="again">Grade another paper</button>
+      </div>
+    </div>
   </section>
 
   <footer class="foot">
     <p>Grades are written by Claude and can be wrong.</p>
-    <details class="privacy">
-      <summary>What happens to your writing</summary>
-      <p>Your file is opened in your browser. Only its text is sent to Anthropic's Claude API to be graded, and the graded pages are drawn in your browser.</p>
-      <p>This app doesn't save your writing, your comments or your grades. Anthropic doesn't use API data to train its models by default.</p>
-      <p>Don't upload anything you aren't allowed to share, like other people's private information.</p>
-    </details>
   </footer>
 </main>
 <div id="viewer" class="viewer" hidden role="dialog" aria-modal="true" aria-label="Graded pages, full size">
