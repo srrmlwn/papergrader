@@ -54,13 +54,6 @@
         </div>
       </div>
 
-      <details class="privacy">
-        <summary><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none"/></svg>Your document isn't stored.</summary>
-        <p>Your file is opened in your browser. Only its text is sent to Anthropic's Claude API to be graded, and the graded pages are drawn in your browser.</p>
-        <p>This app doesn't save your writing, your comments or your grades. Anthropic doesn't use API data to train its models by default.</p>
-        <p>Don't upload anything you aren't allowed to share, like other people's private information.</p>
-      </details>
-
       <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
       <p id="upload-error" class="error" role="alert" hidden></p>
     </form>
@@ -91,6 +84,12 @@
   </section>
 
   <footer class="foot">
+    <details class="privacy">
+      <summary><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none"/></svg>Your document isn't stored.</summary>
+      <p>Your file is opened in your browser. Only its text is sent to Anthropic's Claude API to be graded, and the graded pages are drawn in your browser.</p>
+      <p>This app doesn't save your writing, your comments or your grades. Anthropic doesn't use API data to train its models by default.</p>
+      <p>Don't upload anything you aren't allowed to share, like other people's private information.</p>
+    </details>
     <p>Grades are written by Claude and can be wrong.</p>
   </footer>
 </main>

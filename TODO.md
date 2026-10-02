@@ -12,7 +12,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 | 4 | [~] | Test on iPhone Safari with real phone photos | **[You]** test, Claude fixes | Photo of a printed page (HEIC), a skewed shot, a multi-page PDF, paste, Word. Report anything odd. |
 | 5 | [x] | Cost monitoring | Claude + **[You]** check | Done, no database: Anthropic Console → Cost/Usage (this app has its own key) is the record; each grade also logs a `grade-cost` line (tokens, US$, time) in Vercel logs (kept 1 hour on Hobby, 1 day on Pro). Ask Claude to total recent grades. Long-term history per grade would need a small database (revisit before a public launch). |
 | 6 | [x] | Grade by the right standard for the kind of writing | Claude | Done (simplified): no question on screen; the grader works out whether it is an essay, work writing or a resume and uses that standard. |
-| 7 | [x] | Privacy note | Claude | Done: "Your document isn't stored" under the input box. Server no longer logs any document text. **Update this note if #5 stores anything.** |
+| 7 | [x] | Privacy note | Claude | Done: "Your document isn't stored" in the footer (opens the full note). Server no longer logs any document text. **Update this note if #5 stores anything.** |
 | 8 | [ ] | Pick the final name and domain | **[You]** decide/buy, Claude updates the app | Candidate: "Handed Back". Check domain + USPTO. Rename repo/Vercel project if wanted. |
 | 9 | [ ] | Branded share image + link back | Claude | Small "graded by [name]" mark on downloads/shares. After #8. |
 | 10 | [ ] | Web links as input | Claude | Server fetch + Readability, typeset like pasted text; block private addresses. |
@@ -36,5 +36,5 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 - One input box: paste text, or Choose a file / drop one (the file shows as a removable chip in the same box); no separate headings
 - Result screen: title and big handwritten grade first, then the paper; Download / Share / Copy comments / Grade another in one bar pinned to the bottom of the screen
 - Red only for the teacher (marks, grade, handwriting) and the Turn it in button; everything structural is black and gray
-- "Your document isn't stored" line right under the input box (opens the full privacy note); smaller input box
+- Footer always at the bottom of the page: "Your document isn't stored" (opens the full privacy note) and "Grades are written by Claude and can be wrong"; smaller input box
 - Tap a page to view all pages full size on the same tab (scroll through; tap outside, × or Esc to close)

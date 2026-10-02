@@ -15,6 +15,7 @@
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
+  display: flow-root;          /* keep the sheet's margins inside the page (no stray scroll) */
   background: var(--desk);
   color: var(--type);
   font: 17px/var(--line) var(--typed);
@@ -24,6 +25,7 @@ body {
 /* The page is a plain sheet of paper. */
 .sheet {
   position: relative;
+  display: flex; flex-direction: column;     /* footer sits at the bottom of the page */
   max-width: 860px;
   min-height: 100vh;
   margin: 0 auto;
@@ -137,7 +139,7 @@ input:focus { outline: none; border-bottom-color: #000; }
 .result-grade { flex: none; font: 700 72px/1 var(--hand); color: var(--ink); }
 .action-bar {
   position: sticky; bottom: 0; z-index: 5;
-  margin: var(--line) -56px calc(var(--line) * -2); padding: 12px 56px calc(12px + env(safe-area-inset-bottom));
+  margin: var(--line) -56px 0; padding: 12px 56px calc(12px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, .96); border-top: 1px solid #e3e6eb;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
@@ -180,9 +182,9 @@ html.viewer-open, html.viewer-open body { overflow: hidden; }
   .viewer-pages { gap: 12px; }
 }
 
-.foot { margin-top: calc(var(--line) * 2); color: var(--faint); font-size: 14px; max-width: 62ch; }
-.foot p { margin: 0; }
-.privacy { margin: 10px 0 0; color: var(--faint); font-size: 15px; line-height: 1.5; max-width: 62ch; }
+.foot { margin-top: auto; padding-top: calc(var(--line) * 2); color: var(--faint); font-size: 14px; line-height: 1.5; max-width: 62ch; }
+.foot > p { margin: 6px 0 0; }
+.privacy { margin: 0; color: var(--faint); font-size: 14px; line-height: 1.5; }
 .privacy summary { cursor: pointer; width: fit-content; list-style: none; display: flex; align-items: center; gap: 6px; }
 .privacy summary::-webkit-details-marker { display: none; }
 .privacy summary:hover { color: var(--solid); text-decoration: underline; text-underline-offset: 3px; }
