@@ -192,7 +192,8 @@ class Space {
       }
     }
     for (const w of words) this.fillPx(w.x - 3, w.y - 3, w.x + w.w + 3, w.y + w.h + 3);
-    this.fillPx(0, 0, W, 28); this.fillPx(0, H - 28, W, H); this.fillPx(0, 0, 28, H); this.fillPx(W - 28, 0, W, H);
+    this.fillPx(0, 0, W, 28); this.fillPx(0, H - 60, W, H);   // keeps the foot clear for the credit line
+    this.fillPx(0, 0, 28, H); this.fillPx(W - 28, 0, W, H);
     this.text = this.occ.slice();         // text-only mask, for arrow routing
     this.refresh();
   }
@@ -416,6 +417,11 @@ export async function markPage(page, issues, meta) {
   const c = canvas.getContext("2d");
   c.drawImage(out.base, 0, 0);
   c.filter = "blur(0.6px)"; c.drawImage(out.ink, 0, 0); c.filter = "none";
+  // small gray credit at the foot of every page, so screenshots and downloads say where they came from
+  c.font = '400 22px "Courier Prime", "Courier New", monospace'; c.fillStyle = "#9a9ea6";
+  c.textAlign = "center"; c.textBaseline = "alphabetic";
+  c.fillText(`Graded by Paper Grader \u00b7 ${location.host || "papergrader"}`, out.W / 2, out.H - 26);
+  c.textAlign = "left";
   // for the share card's crop: where the end comment starts, and the bottom of the page-1 header
   canvas.summaryTop = out.summaryTop;
   canvas.headerBottom = meta.index === 0 ? top - 20 : 0;

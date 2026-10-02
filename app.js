@@ -267,6 +267,11 @@ function download(blob, name) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
+// Count shares and downloads (action and page count only; nothing about the document).
+function track(action, files) {
+  fetch("/api/event", { method: "POST", keepalive: true, headers: { "content-type": "application/json" },
+    body: JSON.stringify({ passcode, action, files }) }).catch(() => {});
+}
 let jspdfP = null;
 function loadJsPdf() {
   if (!jspdfP) jspdfP = new Promise((res, rej) => {
@@ -278,6 +283,7 @@ function loadJsPdf() {
 }
 // One Download button: a single page saves as an image (easy to share), several pages as a PDF.
 $("download").addEventListener("click", async () => {
+  track("download", result.canvases.length);
   if (result.canvases.length === 1) return download(result.blobs[0], `${result.slug}-graded.png`);
   const btn = $("download"); btn.disabled = true; btn.textContent = "Making PDF";
   try {
@@ -293,25 +299,35 @@ $("download").addEventListener("click", async () => {
   } catch (err) { alert(err.message); }
   btn.disabled = false; btn.textContent = "Download";
 });
-// Share: a post-ready image (grade, the reddest strip of the paper, the best comment, the
-// site address). Opens the share sheet where the browser supports sharing images; otherwise saves it.
+// Share: the post-ready card first, then every graded page, so a post becomes a carousel and a
+// chat gets the whole paper. Where the browser can't share files, the card is saved instead.
 $("share").addEventListener("click", async () => {
   const btn = $("share");
   const label = "Share";
   try {
     btn.disabled = true; btn.textContent = "Making image";
     if (!result.card) result.card = await makeShareCard({ canvases: result.canvases, header: current.header, comments: current.comments });
-    const file = new File([result.card], `${result.slug}-graded-share.png`, { type: "image/png" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    const card = new File([result.card], `${result.slug}-graded-share.png`, { type: "image/png" });
+    const pages = result.blobs.map((b, i) => new File([b], `${result.slug}-graded-p${i + 1}.png`, { type: "image/png" }));
+    const can = (files) => navigator.canShare && navigator.canShare({ files });
+    const files = can([card, ...pages]) ? [card, ...pages] : can([card]) ? [card] : null;
+    if (files) {
       btn.disabled = false; btn.textContent = label;
-      await navigator.share({ files: [file], title: "My paper, graded" });
+      try {
+        await navigator.share({ files, title: "My paper, graded" });
+        track("share", files.length);
+      } catch (err) {
+        track(err && err.name === "AbortError" ? "share-cancel" : "share-fail", files.length);
+        if (err && err.name !== "AbortError") throw err;
+      }
       return;
     }
-    download(result.card, file.name);
+    download(result.card, card.name);
+    track("share-save", 1);
     btn.textContent = "Image saved";
     setTimeout(() => { btn.textContent = label; }, 2200);
   } catch (err) {
-    if (err && err.name !== "AbortError") console.error(err);   // AbortError = the person closed the share sheet
+    if (err && err.name !== "AbortError") console.error(err);
     btn.textContent = label;
   } finally {
     btn.disabled = false;
