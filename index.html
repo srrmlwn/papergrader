@@ -40,16 +40,14 @@
     <form id="upload-form">
       <div class="composer" id="composer">
         <label class="sr-only" for="paste">Your writing</label>
-        <textarea id="paste" class="paste" rows="4" spellcheck="false" placeholder="Paste your writing here, or drop a file."></textarea>
+        <textarea id="paste" class="paste" rows="6" spellcheck="false" placeholder="Paste your writing here, or drop a file."></textarea>
         <div class="file-chip" id="file-chip" hidden>
-          <span class="file-name" id="file-name"></span>
+          <span class="file-info"><span class="file-name" id="file-name"></span><span class="file-meta" id="file-meta"></span></span>
           <button type="button" class="file-remove" id="file-remove" aria-label="Remove file">×</button>
         </div>
         <div class="composer-foot">
-          <label class="btn btn-quiet file-btn">
-            <input id="file" type="file" accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain,image/png,image/jpeg,image/webp,image/*">
-            Choose a file
-          </label>
+          <input id="file" class="sr-only" type="file" accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain,image/png,image/jpeg,image/webp,image/*">
+          <label class="btn btn-quiet file-btn" for="file" id="file-btn">Choose a file</label>
           <span class="composer-hint" id="composer-hint">PDF, Word or photo. Up to 8 pages.</span>
         </div>
       </div>
@@ -69,7 +67,7 @@
   <!-- 4. result -->
   <section id="result" class="view" hidden>
     <div class="result-head">
-      <h2 class="result-title"><span id="result-title"></span><span class="result-grade" id="result-grade"></span></h2>
+      <h2 class="result-title"><span>Your paper is back.</span><span class="result-grade" id="result-grade"></span></h2>
       <p class="aside" id="result-notes"></p>
     </div>
     <div class="pages" id="pages"></div>

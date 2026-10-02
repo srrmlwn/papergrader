@@ -41,6 +41,8 @@ function refreshSubmit() {
 }
 function clearFile() {
   chosen = null; $("file").value = "";
+  $("composer").classList.remove("has-file");
+  $("file-btn").textContent = "Choose a file";
   $("file-chip").hidden = true;
   $("paste").hidden = false;
   refreshSubmit();
@@ -54,10 +56,22 @@ $("paste").addEventListener("input", () => {
   $("upload-error").hidden = true;
   refreshSubmit();
 });
+function describe(file) {
+  const kb = file.size / 1024;
+  const size = kb < 1024 ? `${Math.max(1, Math.round(kb))} KB` : `${(kb / 1024).toFixed(1)} MB`;
+  const kind = /\.pdf$/i.test(file.name) || file.type === "application/pdf" ? "PDF"
+    : /\.docx$/i.test(file.name) ? "Word file"
+    : /\.(txt|md)$/i.test(file.name) ? "Text file"
+    : file.type.startsWith("image/") ? "Photo" : "File";
+  return `${kind}, ${size}`;
+}
 function pick(file) {
   if (!file) return;
   chosen = file;
   $("file-name").textContent = file.name;
+  $("file-meta").textContent = describe(file);
+  $("composer").classList.add("has-file");
+  $("file-btn").textContent = "Replace";
   $("file-chip").hidden = false;
   $("paste").hidden = true;            // pasted text stays in the box underneath, in case the file is removed
   $("composer-hint").textContent = HINT;
@@ -79,13 +93,12 @@ composer.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) pick(e.d
 // the lines just keep the wait from feeling stuck, and stop as soon as the grade comes back.
 const WAIT_LINES = [
   "Reading it through once",
-  "Reading it again, with the red pen",
+  "Reading it again, more suspiciously",
   "Checking the argument holds up",
-  "Circling suspicious commas",
-  "Counting how many times you said \u201cjust\u201d",
+  "Looking for claims that need backup",
+  "Circling things in red",
   "Deciding whether that semicolon was necessary",
-  "Looking for something nice to say",
-  "Settling on a grade",
+  "Deciding what this deserves",
 ];
 function rotateLines(status) {
   let k = 0;
@@ -175,14 +188,12 @@ async function showResult(canvases, header, info) {
     btn.appendChild(img);
     box.appendChild(btn);
   });
-  $("result-title").textContent = header.title;
   $("result-grade").textContent = header.grade;
   const notes = [];
-  if (info.truncated) notes.push(`Your writing ran past ${MAX_PAGES} pages; only the first ${MAX_PAGES} were graded.`);
-  else if (info.total > MAX_PAGES) notes.push(`Only the first ${MAX_PAGES} of ${info.total} pages were graded.`);
-  if (info.dropped) notes.push(`${info.dropped} minor ${info.dropped === 1 ? "note was" : "notes were"} left off because the page ran out of room.`);
-  if (info.missing) notes.push(`${info.missing} ${info.missing === 1 ? "comment" : "comments"} couldn't be matched to the text and ${info.missing === 1 ? "was" : "were"} skipped.`);
-  $("result-notes").textContent = notes.join(" ");
+  if (info.total > MAX_PAGES || info.truncated) notes.push(info.truncated ? `First ${MAX_PAGES} pages graded` : `First ${MAX_PAGES} of ${info.total} pages graded`);
+  if (info.dropped) notes.push(`${info.dropped} minor ${info.dropped === 1 ? "note" : "notes"} left off for space`);
+  if (info.missing) notes.push(`${info.missing} ${info.missing === 1 ? "comment" : "comments"} couldn't be placed`);
+  $("result-notes").textContent = notes.length ? notes.join(". ") + "." : "";
   const slug = header.title.replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "paper";
   result = { canvases, blobs, slug };
   const file0 = new File([blobs[0]], `${slug}-graded.png`, { type: "image/png" });

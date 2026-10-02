@@ -100,7 +100,7 @@ input:focus { outline: none; border-bottom-color: #000; }
 .paste {
   display: block; width: 100%; margin: 0; padding: 14px 16px;
   font: 17px/1.6 var(--typed); color: var(--type);
-  min-height: 7.5em; resize: vertical; border: 0; background: transparent; border-radius: 8px 8px 0 0;
+  min-height: 10em; resize: vertical; border: 0; background: transparent; border-radius: 8px 8px 0 0;
 }
 .paste[hidden] { display: none; }
 .paste::placeholder { color: #8d94a0; }
@@ -108,10 +108,12 @@ input:focus { outline: none; border-bottom-color: #000; }
 .file-chip {
   display: flex; align-items: center; gap: 10px; margin: 16px; padding: 12px 14px;
   border-radius: 6px; background: #f2f3f5; color: var(--solid);
-  min-height: calc(7.5em - 32px); align-content: center;
+  min-height: calc(10em - 32px); align-content: center;
 }
 .file-chip[hidden] { display: none; }
-.file-name { font: 700 26px/1.25 var(--hand); overflow-wrap: anywhere; flex: 1; min-width: 0; }
+.file-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.file-name { font: 700 26px/1.25 var(--hand); overflow-wrap: anywhere; }
+.file-meta { font-size: 15px; line-height: 1.4; color: var(--faint); }
 .file-remove {
   flex: none; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
   background: #fff; color: var(--type); font: 400 24px/36px var(--typed);
@@ -121,9 +123,10 @@ input:focus { outline: none; border-bottom-color: #000; }
   display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap;
   padding: 10px 12px; border-top: 1px solid #e3e6eb;
 }
-.file-btn { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
-.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
-.file-btn:focus-within { outline: 3px solid #2f6fd6; outline-offset: 3px; }
+.file-btn { display: inline-flex; align-items: center; cursor: pointer; }
+#file:focus-visible + .file-btn { outline: 3px solid #2f6fd6; outline-offset: 3px; }
+.composer.has-file .file-btn { height: auto; padding: 0 4px; border: 0; background: none; font-weight: 400; text-decoration: underline; text-underline-offset: 3px; }
+.composer.has-file .composer-hint { display: none; }
 .composer-hint { color: var(--faint); font-size: 15px; line-height: 1.4; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* working */
@@ -134,6 +137,7 @@ input:focus { outline: none; border-bottom-color: #000; }
 
 /* results */
 .result-head { margin-bottom: calc(var(--line) / 2); }
+.result-head .aside { font-size: 14px; line-height: 1.4; margin-top: -4px; }
 .result-title { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
   font: 400 20px/1.35 var(--typed); color: var(--type); }
 .result-grade { flex: none; font: 700 72px/1 var(--hand); color: var(--ink); }

@@ -14,7 +14,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 | 6 | [x] | Grade by the right standard for the kind of writing | Claude | Done (simplified): no question on screen; the grader works out whether it is an essay, work writing or a resume and uses that standard. |
 | 7 | [x] | Privacy note | Claude | Done: "Your document isn't stored" in the footer (opens the full note). Server no longer logs any document text. **Update this note if #5 stores anything.** |
 | 8 | [ ] | Pick the final name and domain | **[You]** decide/buy, Claude updates the app | Candidate: "Handed Back". Check domain + USPTO. Rename repo/Vercel project if wanted. |
-| 9 | [ ] | Branded share image + link back | Claude | Small "graded by [name]" mark on downloads/shares. After #8. |
+| 9 | [ ] | Branded share image + link back | Claude | **Next up.** A post-ready image: grade, a cropped strip of red ink, the best comment as a pull quote, the site address. Can ship with "Paper Grader" and swap the name later. |
 | 10 | [ ] | Web links as input | Claude | Server fetch + Readability, typeset like pasted text; block private addresses. |
 | 11 | [x] | Better waiting screen | Claude | Done: rotating teacher lines while the grader works (no fake progress bar), then "Writing in the margins". |
 | 12 | [ ] | End comment on multi-page papers | Claude | Short end note on page 1 too, or a cover note; today it's only on the last page. |
@@ -37,4 +37,6 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 - Result screen: title and big handwritten grade first, then the paper; Download / Share / Copy comments / Grade another in one bar pinned to the bottom of the screen
 - Red only for the teacher (marks, grade, handwriting) and the Turn it in button; everything structural is black and gray
 - Footer always at the bottom of the page: "Your document isn't stored" (opens the full privacy note) and "Grades are written by Claude and can be wrong"; smaller input box
+- Native file input fully hidden (no "No file chosen" tooltip); a chosen file shows its name, type and size with a Replace link
+- Result header reads "Your paper is back." with the grade; page-limit and left-off notes in small gray type
 - Tap a page to view all pages full size on the same tab (scroll through; tap outside, × or Esc to close)
