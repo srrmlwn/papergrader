@@ -33,26 +33,23 @@ $("gate-form").addEventListener("submit", async (e) => {
   } catch (err) { $("gate-error").textContent = err.message; $("gate-error").hidden = false; }
 });
 
-// ---------- input choice: a file or pasted text (whichever was used last) ----------
+// ---------- one box: paste text, or choose / drop a file (a file replaces the text box) ----------
 const URL_ONLY = /^\s*https?:\/\/\S+\s*$/i;
+const HINT = "PDF, Word or photo. Up to 8 pages.";
 function refreshSubmit() {
-  const text = $("paste").value.trim();
-  $("submit").disabled = !(chosen || text);
+  $("submit").disabled = !(chosen || $("paste").value.trim());
 }
 function clearFile() {
   chosen = null; $("file").value = "";
-  $("tray").classList.remove("has-file");
-  $("tray-title").textContent = "Turn in your paper";
-  $("tray-hint").textContent = "Tap to choose a PDF, Word file or image, or drop it here. Up to 8 pages.";
+  $("file-chip").hidden = true;
+  $("paste").hidden = false;
+  refreshSubmit();
 }
 $("paste").addEventListener("input", () => {
   const v = $("paste").value;
-  if (v.trim() && chosen) clearFile();
-  $("paste").classList.remove("dimmed");
   const words = (v.match(/\S+/g) || []).length;
-  $("paste-meta").hidden = !words;
-  $("paste-meta").textContent = URL_ONLY.test(v)
-    ? "Links aren't supported yet. Paste the text of the page instead."
+  $("composer-hint").textContent = !words ? HINT
+    : URL_ONLY.test(v) ? "Links aren't supported yet. Paste the text of the page instead."
     : `${words.toLocaleString()} ${words === 1 ? "word" : "words"}`;
   $("upload-error").hidden = true;
   refreshSubmit();
@@ -60,18 +57,23 @@ $("paste").addEventListener("input", () => {
 function pick(file) {
   if (!file) return;
   chosen = file;
-  if ($("paste").value.trim()) $("paste").classList.add("dimmed");
-  $("tray").classList.add("has-file");
-  $("tray-title").textContent = file.name;
-  $("tray-hint").textContent = `${(file.size / 1024 / 1024).toFixed(1)} MB. Tap to choose a different file.`;
-  $("submit").disabled = false;
+  $("file-name").textContent = file.name;
+  $("file-chip").hidden = false;
+  $("paste").hidden = true;            // pasted text stays in the box underneath, in case the file is removed
+  $("composer-hint").textContent = HINT;
   $("upload-error").hidden = true;
+  refreshSubmit();
 }
 $("file").addEventListener("change", (e) => pick(e.target.files[0]));
-const tray = $("tray");
-["dragenter", "dragover"].forEach(t => tray.addEventListener(t, (e) => { e.preventDefault(); tray.classList.add("drag"); }));
-["dragleave", "drop"].forEach(t => tray.addEventListener(t, (e) => { e.preventDefault(); tray.classList.remove("drag"); }));
-tray.addEventListener("drop", (e) => pick(e.dataTransfer.files[0]));
+$("file-remove").addEventListener("click", () => {
+  clearFile();
+  $("paste").dispatchEvent(new Event("input"));
+  $("paste").focus();
+});
+const composer = $("composer");
+["dragenter", "dragover"].forEach(t => composer.addEventListener(t, (e) => { e.preventDefault(); composer.classList.add("drag"); }));
+["dragleave", "drop"].forEach(t => composer.addEventListener(t, (e) => { e.preventDefault(); composer.classList.remove("drag"); }));
+composer.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); });
 
 // ---------- grading ----------
 let current = null;     // the paper on screen: { header, comments }
@@ -264,7 +266,7 @@ $("share").addEventListener("click", async () => {
 $("again").addEventListener("click", () => {
   current = null;
   clearFile();
-  $("paste").value = ""; $("paste").classList.remove("dimmed"); $("paste-meta").hidden = true;
+  $("paste").value = ""; $("composer-hint").textContent = HINT;
   $("submit").disabled = true;
   show("upload"); window.scrollTo({ top: 0 });
 });

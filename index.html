@@ -38,15 +38,21 @@
       in red pen.</p>
 
     <form id="upload-form">
-      <label class="tray" id="tray">
-        <input id="file" type="file" accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain,image/png,image/jpeg,image/webp,image/*">
-        <span class="tray-title" id="tray-title">Turn in your paper</span>
-        <span class="tray-hint" id="tray-hint">Tap to choose a PDF, Word file or image, or drop it here. Up to 8 pages.</span>
-      </label>
-
-      <label class="paste-label" for="paste">Or paste your writing</label>
-      <textarea id="paste" class="paste" rows="5" spellcheck="false" placeholder="An email, a cover letter, an essay..."></textarea>
-      <p class="paste-meta" id="paste-meta" hidden></p>
+      <div class="composer" id="composer">
+        <label class="sr-only" for="paste">Your writing</label>
+        <textarea id="paste" class="paste" rows="8" spellcheck="false" placeholder="Paste your writing here, or drop a file."></textarea>
+        <div class="file-chip" id="file-chip" hidden>
+          <span class="file-name" id="file-name"></span>
+          <button type="button" class="file-remove" id="file-remove" aria-label="Remove file">×</button>
+        </div>
+        <div class="composer-foot">
+          <label class="btn btn-quiet file-btn">
+            <input id="file" type="file" accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain,image/png,image/jpeg,image/webp,image/*">
+            Choose a file
+          </label>
+          <span class="composer-hint" id="composer-hint">PDF, Word or photo. Up to 8 pages.</span>
+        </div>
+      </div>
 
       <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
       <p id="upload-error" class="error" role="alert" hidden></p>

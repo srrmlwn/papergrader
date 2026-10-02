@@ -81,36 +81,44 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 .btn-quiet { color: var(--ink); background: transparent; }
 .btn-quiet:hover { background: rgba(196, 22, 32, .06); border-color: var(--ink); }
 .btn-big { height: calc(var(--line) * 1.5); font-size: 18px; padding: 0 26px; margin-top: calc(var(--line) / 2); }
-.btn:focus-visible, .tray:focus-within { outline: 3px solid #2f6fd6; outline-offset: 3px; }
+.btn:focus-visible { outline: 3px solid #2f6fd6; outline-offset: 3px; }
 
-/* the drop tray */
-.tray {
-  display: block; position: relative; cursor: pointer;
-  margin: 0 0 calc(var(--line) / 2); padding: calc(var(--line) / 2) 18px;
-  min-height: calc(var(--line) * 4);
-  border: 2px dashed #9aa6b8; border-radius: 6px;
-  background: rgba(255,255,255,.7);
+/* one box for everything: paste text, drop a file, or choose one */
+.composer {
+  border: 2px solid #c9cfd8; border-radius: 8px; background: #fff;
+  transition: border-color .15s;
 }
-.tray:hover, .tray.drag { border-color: var(--ink); background: rgba(196, 22, 32, .04); }
-.tray input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
-.tray-title { display: block; font: 700 34px/48px var(--hand); color: var(--type); }
-.tray.has-file .tray-title { color: var(--ink); }
-.tray-hint { display: block; color: var(--faint); font-size: 15px; }
-
-/* paste box: writing on the ruled lines */
-.paste-label { display: block; font: 700 26px/var(--line) var(--hand); color: var(--ink); }
+.composer:focus-within, .composer.drag { border-color: var(--ink); }
+.composer.drag { background: rgba(196, 22, 32, .04); }
 .paste {
-  display: block; width: 100%; margin: 0; padding: 0 4px;
-  font: 17px/var(--line) var(--typed); color: var(--type);
-  min-height: calc(var(--line) * 5); resize: vertical;
-  border: 0; border-left: 2px solid transparent; border-radius: 0;
-  background: transparent;
+  display: block; width: 100%; margin: 0; padding: 14px 16px;
+  font: 17px/1.6 var(--typed); color: var(--type);
+  min-height: 12em; resize: vertical; border: 0; background: transparent; border-radius: 8px 8px 0 0;
 }
-.paste::placeholder { color: #9aa1ad; }
-.paste:focus { outline: none; border-left-color: var(--ink); }
-.paste.dimmed { opacity: .45; }
-.paste-meta { margin: 0; color: var(--faint); font-size: 15px; }
-
+.paste[hidden] { display: none; }
+.paste::placeholder { color: #8d94a0; }
+.paste:focus { outline: none; }
+.file-chip {
+  display: flex; align-items: center; gap: 10px; margin: 16px; padding: 12px 14px;
+  border-radius: 6px; background: rgba(196, 22, 32, .06); color: var(--ink);
+  min-height: calc(12em - 32px); align-content: center;
+}
+.file-chip[hidden] { display: none; }
+.file-name { font: 700 26px/1.25 var(--hand); overflow-wrap: anywhere; flex: 1; min-width: 0; }
+.file-remove {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+  background: #fff; color: var(--type); font: 400 24px/36px var(--typed);
+}
+.file-remove:focus-visible { outline: 3px solid #2f6fd6; outline-offset: 2px; }
+.composer-foot {
+  display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap;
+  padding: 10px 12px; border-top: 1px solid #e3e6eb;
+}
+.file-btn { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.file-btn:focus-within { outline: 3px solid #2f6fd6; outline-offset: 3px; }
+.composer-hint { color: var(--faint); font-size: 15px; line-height: 1.4; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* working */
 .status { margin: 0 0 var(--line); font-size: 19px; }
 .caret { display: inline-block; width: .6ch; height: 1.1em; margin-left: 2px; vertical-align: -3px; background: var(--type); animation: blink 1s steps(1) infinite; }

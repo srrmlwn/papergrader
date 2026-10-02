@@ -33,4 +33,5 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 - Deployed on Vercel from this repo (auto-deploys on push to `main`)
 - Clear "usage limit reached" message when the monthly spend limit is hit
 - Plain paper: no ruled lines (they drifted out of alignment on real devices), no margin line, title set straight; waiting screen shows the file name and the current step only
+- One input box: paste text, or Choose a file / drop one (the file shows as a removable chip in the same box); no separate headings
 - Tap a page to view all pages full size on the same tab (scroll through; tap outside, × or Esc to close)
