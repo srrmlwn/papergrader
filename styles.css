@@ -1,13 +1,11 @@
 :root {
   --paper: #ffffff;
   --desk: #e3e8ef;
-  --margin: #e9a3a3;
   --ink: #c4161c;
   --ink-dark: #9e1015;
   --type: #25272d;
   --faint: #6b6f78;
   --line: 32px;               /* one ruled line: every text line sits on it */
-  --gutter: 72px;             /* left margin, where the red line runs */
   --hand: "Caveat", "Bradley Hand", cursive;
   --typed: "Courier Prime", "Courier New", monospace;
 }
@@ -22,31 +20,26 @@ body {
   min-height: 100vh;
 }
 
-/* The page is a plain sheet of paper with a red margin line. */
+/* The page is a plain sheet of paper. */
 .sheet {
   position: relative;
   max-width: 860px;
   min-height: 100vh;
   margin: 0 auto;
-  padding: calc(var(--line) * 2) 28px calc(var(--line) * 2) calc(var(--gutter) + 20px);
-  background:
-    linear-gradient(to right, transparent calc(var(--gutter) - 1px), var(--margin) calc(var(--gutter) - 1px), var(--margin) calc(var(--gutter) + 1px), transparent calc(var(--gutter) + 1px));
+  padding: calc(var(--line) * 2) 56px;
   background-color: var(--paper);
 }
 @media (min-width: 900px) {
   .sheet { margin: 32px auto; min-height: calc(100vh - 64px); box-shadow: 0 1px 2px rgba(40, 50, 70, .12), 0 12px 32px rgba(40, 50, 70, .10); }
 }
 @media (max-width: 520px) {
-  :root { --gutter: 36px; }
-  .sheet { padding-left: calc(var(--gutter) + 14px); padding-right: 16px; }
+  .sheet { padding-left: 16px; padding-right: 16px; }
 }
 
 .brand {
   margin: 0 0 var(--line);
   font: 700 64px/64px var(--hand);
   color: var(--ink);
-  transform: rotate(-1.5deg);
-  transform-origin: left center;
 }
 .lede {
   margin: 0 0 var(--line);
@@ -127,8 +120,8 @@ input:focus { outline: none; border-bottom-color: var(--ink); }
 /* results */
 .result-head { margin-bottom: var(--line); }
 .actions { display: flex; flex-wrap: wrap; gap: 10px 12px; margin: 0 0 calc(var(--line) / 2); }
-.pages { display: grid; gap: 28px; margin-left: calc(-1 * var(--gutter) + 8px); }
-@media (max-width: 520px) { .pages { margin-left: calc(-1 * var(--gutter) + 2px); margin-right: -10px; } }
+.pages { display: grid; gap: 28px; margin: 0 -24px; }
+@media (max-width: 520px) { .pages { margin: 0 -8px; } }
 .page-btn { display: block; padding: 0; border: 0; background: none; cursor: zoom-in; width: 100%; }
 .page-btn:focus-visible { outline: 3px solid #2f6fd6; outline-offset: 4px; }
 .pages img { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 1px 2px rgba(40,50,70,.18), 0 8px 24px rgba(40,50,70,.12); }
