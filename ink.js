@@ -22,13 +22,6 @@ function makeRng(seed) {
 let rand = makeRng(7);
 const jit = (v, a) => v + (rand() * 2 - 1) * a;
 
-// Every stroke and line of writing is also recorded as a rectangle, so the app can ink the
-// page in afterwards in the order a teacher writes. `rec` collects into the current group.
-let rec = null;
-function inked(x0, y0, x1, y1, ax = "x", dir = 1) {
-  if (rec && x1 > x0 && y1 > y0) rec.push({ r: [x0, y0, x1, y1], ax, dir });
-}
-
 export function norm(s) { return String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, ""); }
 
 function lcs(a, b) {
@@ -102,10 +95,6 @@ function stroke(ctx, pts, width = 4) {
   }
   const l = pts[pts.length - 1]; ctx.lineTo(l[0], l[1]);
   ctx.stroke(); ctx.restore();
-  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), pad = width + 3;
-  const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad, y0 = Math.min(...ys) - pad, y1 = Math.max(...ys) + pad;
-  const tall = y1 - y0 > (x1 - x0) * 1.5;      // the pen travels the long way across the stroke
-  inked(x0, y0, x1, y1, tall ? "y" : "x", tall ? Math.sign(l[1] - pts[0][1]) || 1 : Math.sign(l[0] - pts[0][0]) || 1);
 }
 function ellipse(ctx, [x0, y0, x1, y1], pad = 10) {
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
@@ -146,7 +135,6 @@ function caretInsert(ctx, [x0, y0, x1, y1], text, lifted) {
   ctx.font = font(sz); ctx.fillStyle = INK; ctx.textBaseline = "alphabetic";
   const tw = ctx.measureText(text).width;
   ctx.fillText(text, cx - tw / 2, y0 - 3);
-  inked(cx - tw / 2 - 4, y0 - 3 - sz, cx + tw / 2 + 4, y0 + 6);
   ctx.textBaseline = "top";
   stroke(ctx, [[cx - 7, y1 + 6], [cx, y1 - 3], [cx + 7, y1 + 6]], 3);
 }
@@ -172,8 +160,6 @@ function stamp(ctx, cx, cy, grade) {
   const sz = grade.length > 2 ? 100 : 130;
   ctx.font = font(sz); ctx.fillStyle = INK; ctx.textBaseline = "middle"; ctx.textAlign = "center";
   ctx.fillText(grade, cx, cy + 4);
-  const gw = ctx.measureText(grade).width;
-  inked(cx - gw / 2 - 6, cy - sz * 0.6, cx + gw / 2 + 6, cy + sz * 0.6);
   ctx.textAlign = "left";
 }
 function wrap(ctx, text, sz, maxw) {
@@ -188,11 +174,7 @@ function wrap(ctx, text, sz, maxw) {
 }
 function drawLines(ctx, lines, sz, x, y) {
   ctx.font = font(sz); ctx.fillStyle = INK; ctx.textBaseline = "top";
-  lines.forEach((ln, k) => {
-    const lx = x + jit(0, 2), ly = y + k * sz * LINE_H;
-    ctx.fillText(ln, lx, ly);
-    inked(lx - 4, ly - 4, lx + ctx.measureText(ln).width + 6, ly + sz * LINE_H + 6);
-  });
+  lines.forEach((ln, k) => ctx.fillText(ln, x + jit(0, 2), y + k * sz * LINE_H));
 }
 
 // ---------- free-space tracking on a coarse grid ----------
@@ -325,11 +307,12 @@ function layoutNote(ctx, text, space, tgt, sizes = NOTE_SIZES, widths = NOTE_WID
 
 // ---------- page composition ----------
 /**
- * The plain page, cropped and given paper margins, ready to be marked. It doesn't depend
- * on the grade, so the app shows it while the paper is being graded.
  * page: { image: HTMLCanvasElement, words: [{text,x,y,w,h,line}], crop: bool }
+ * issues: this page's issues from the grader. meta: { index, count, header, summary }
+ * returns { canvas, placed, dropped, missing }
  */
-export function preparePage(page, index) {
+export async function markPage(page, issues, meta) {
+  rand = makeRng(1000 + meta.index * 97);
   const src = page.image;
   // crop to the text block (drops empty page area, nav bars etc.), then add plain margins
   let cx0 = 0, cy0 = 0, cx1 = src.width, cy1 = src.height;
@@ -340,7 +323,7 @@ export function preparePage(page, index) {
     cy1 = Math.min(src.height, Math.max(...page.words.map(w => w.y + w.h)) + 10);
   }
   const side = page.crop ? MARGIN : 90;
-  const top = (page.crop ? MARGIN : 40) + (index === 0 ? 150 : 40);
+  const top = (page.crop ? MARGIN : 40) + (meta.index === 0 ? 150 : 40);
   const bottom = page.crop ? MARGIN : 60;
   const W = Math.round(cx1 - cx0 + 2 * side), H = Math.round(cy1 - cy0 + top + bottom);
 
@@ -352,44 +335,22 @@ export function preparePage(page, index) {
 
   const words = page.words.map(w => ({ ...w, x: w.x - cx0 + side, y: w.y - cy0 + top, n: norm(w.text) }))
                           .filter(w => w.n);
-  return { base, words, W, H, side };
-}
-
-/**
- * prep: from preparePage. issues: this page's issues from the grader. meta: { index, count, header }
- * returns { canvas, base, ink, strokes, placed, dropped, missing }: `canvas` is the finished page;
- * `base` + `ink` are its two layers and `strokes` the pen's path over them, in writing order.
- */
-export async function markPage(prep, issues, meta) {
-  rand = makeRng(1000 + meta.index * 97);
-  const { base, words, W, H, side } = prep;
-  const bctx = base.getContext("2d", { willReadFrequently: true });
 
   const ink = document.createElement("canvas"); ink.width = W; ink.height = H;
   const ctx = ink.getContext("2d", { willReadFrequently: true });
 
-  let name, grade = [];
-  rec = [];
   if (meta.index === 0) {
     const h = meta.header;
     ctx.font = font(46); ctx.fillStyle = INK; ctx.textBaseline = "top";
-    const nm = `Name: ${h.title}`;
-    ctx.fillText(nm, side, 54);
-    inked(side - 4, 50, side + ctx.measureText(nm).width + 6, 54 + 46 * LINE_H + 4);
-    name = rec; rec = [];
+    ctx.fillText(`Name: ${h.title}`, side, 54);
     ctx.font = font(40);
-    const pts = `-${h.points} pts`, px = W - 290 - ctx.measureText(pts).width;
-    ctx.fillText(pts, px, 70);
-    inked(px - 4, 66, px + ctx.measureText(pts).width + 6, 70 + 40 * LINE_H + 4);
+    const pts = `-${h.points} pts`;
+    ctx.fillText(pts, W - 290 - ctx.measureText(pts).width, 70);
     stamp(ctx, W - 150, 125, h.grade);
-    grade = rec;
   } else {
     ctx.font = font(40); ctx.fillStyle = INK; ctx.textBaseline = "top";
     ctx.fillText(`p.${meta.index + 1}`, W - 150, 40);
-    inked(W - 154, 36, W - 150 + ctx.measureText(`p.${meta.index + 1}`).width + 6, 40 + 40 * LINE_H + 4);
-    name = rec;
   }
-  rec = null;
 
   // 1) draw the marks
   const pending = [], missing = [];
@@ -398,7 +359,6 @@ export async function markPage(prep, issues, meta) {
     const spans = refs.map(r => resolve(words, r.anchor, r.occurrence)).filter(Boolean);
     if (!spans.length) { missing.push(iss); continue; }
     const tgts = [];
-    rec = [];
     for (const span of spans) {
       const boxes = lineBoxes(span), m = iss.mark;
       if (m === "circle") boxes.forEach(b => ellipse(ctx, b));
@@ -417,24 +377,20 @@ export async function markPage(prep, issues, meta) {
         tgts.push({ box: [bx - 4, boxes[0][1], bx + 2, boxes[boxes.length - 1][3]], lx0: bx - 4, lx1 });
       } else tgts.push({ box: boxes[boxes.length - 1], lx0, lx1 });
     }
-    pending.push({ iss, tgts, marks: rec, note: [] });
-    rec = null;
+    pending.push({ iss, tgts });
   }
 
   const space = new Space(bctx, W, H, words);
   space.addInk(ctx, null);
 
   // 2) notes: most important first; drop rather than shrink below readable size
-  const byPlace = pending.slice();                  // reading order, for the pen
   pending.sort((a, b) => (a.iss.priority || 2) - (b.iss.priority || 2) || a.tgts[0].box[1] - b.tgts[0].box[1]);
   const placed = [], dropped = [];
   for (const p of pending) {
     await new Promise(r => setTimeout(r, 0));           // keep the UI responsive
-    if (!String(p.iss.note || "").trim()) { placed.push(p.iss); continue; }   // a mark with nothing to say
     const fit = layoutNote(ctx, p.iss.note, space, p.tgts[0]);
     const tooFar = fit && fit.d > 380 && (p.iss.priority || 2) >= 2;
     if (!fit || tooFar) { dropped.push(p.iss); continue; }
-    rec = p.note;
     drawLines(ctx, fit.lines, fit.sz, fit.x, fit.y);
     space.fillPx(fit.x - 28, fit.y - 8, fit.x + fit.w + 28, fit.y + fit.h + 8);
     const rect = { x: fit.x, y: fit.y, w: fit.w, h: fit.h };
@@ -447,28 +403,19 @@ export async function markPage(prep, issues, meta) {
       dirty = [Math.min(dirty[0], r.s[0], r.e[0]) - 30, Math.min(dirty[1], r.s[1], r.e[1]) - 30,
                Math.max(dirty[2], r.s[0], r.e[0]) + 30, Math.max(dirty[3], r.s[1], r.e[1]) + 30];
     });
-    rec = null;
     space.addInk(ctx, dirty);
     placed.push(p.iss);
   }
 
   // 3) end comment on the last page, in the blank space after the text
-  let out = { base, ink, W, H, strokes: [] };
+  let out = { base, ink, W, H };
   if (meta.index === meta.count - 1) out = placeSummary(out, space, words, side, meta.header);
 
-  // the ink is softened once, so the finished page and the pen replay match exactly
-  const soft = document.createElement("canvas"); soft.width = out.W; soft.height = out.H;
-  const sc = soft.getContext("2d");
-  sc.filter = "blur(0.6px)"; sc.drawImage(out.ink, 0, 0); sc.filter = "none";
   const canvas = document.createElement("canvas"); canvas.width = out.W; canvas.height = out.H;
   const c = canvas.getContext("2d");
-  c.drawImage(out.base, 0, 0); c.drawImage(soft, 0, 0);
-
-  // the pen's order: name, each mark then its note from the top of the page down,
-  // the end comment, and the grade last
-  byPlace.sort((a, b) => a.tgts[0].box[1] - b.tgts[0].box[1] || a.tgts[0].box[0] - b.tgts[0].box[0]);
-  const strokes = [name, ...byPlace.flatMap(p => [p.marks, p.note]), out.strokes, grade].filter(g => g.length);
-  return { canvas, base: out.base, ink: soft, strokes, placed, dropped, missing };
+  c.drawImage(out.base, 0, 0);
+  c.filter = "blur(0.6px)"; c.drawImage(out.ink, 0, 0); c.filter = "none";
+  return { canvas, placed, dropped, missing };
 }
 
 function placeSummary({ base, ink, W, H }, space, words, side, h) {
@@ -493,11 +440,9 @@ function placeSummary({ base, ink, W, H }, space, words, side, h) {
     y = H - 60; H += extra;
   }
   const ic = ink.getContext("2d");
-  const strokes = rec = [];
   drawLines(ic, [h.verdict], vs, x, y);
   drawLines(ic, lines, ss, x, y + vs * 1.2);
-  rec = null;
-  return { base, ink, W, H, strokes };
+  return { base, ink, W, H };
 }
 
 // Top edge of the content: the first row with real ink across the text column, so titles,

@@ -20,7 +20,7 @@
 
   <!-- 1. passcode -->
   <section id="gate" class="view" hidden>
-    <p class="lede" tabindex="-1">Drop in a document.<br>Get it back graded, in red pen.</p>
+    <p class="lede">Drop in a document.<br>Get it back graded, in red pen.</p>
     <form id="gate-form" class="gate" autocomplete="off">
       <label for="passcode">Class passcode</label>
       <div class="row">
@@ -33,7 +33,7 @@
 
   <!-- 2. upload -->
   <section id="upload" class="view" hidden>
-    <p class="lede" tabindex="-1">Drop in a document.<br>Get it back
+    <p class="lede">Drop in a document.<br>Get it back
       <span class="circled">graded<svg viewBox="0 0 200 80" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M150 14 C 105 -2, 18 4, 10 38 C 3 70, 120 78, 178 56 C 212 40, 188 12, 128 10"/></svg></span>,
       in red pen.</p>
 
@@ -54,24 +54,16 @@
   </section>
 
   <!-- 3. working -->
-  <section id="working" class="view" hidden>
-    <p class="lede" tabindex="-1">Grading <span id="working-name"></span></p>
-    <ol class="steps" id="steps">
-      <li data-step="read"><svg class="tick" viewBox="0 0 28 24" aria-hidden="true"><path pathLength="1" d="M2 13 C 5 15, 8 19, 10 22 C 14 14, 19 8, 26 2"/></svg><span class="step-text">Reading your paper</span></li>
-      <li data-step="grade"><svg class="tick" viewBox="0 0 28 24" aria-hidden="true"><path pathLength="1" d="M2 13 C 5 15, 8 19, 10 22 C 14 14, 19 8, 26 2"/></svg><span class="step-text">Grading it</span></li>
-      <li data-step="mark"><svg class="tick" viewBox="0 0 28 24" aria-hidden="true"><path pathLength="1" d="M2 13 C 5 15, 8 19, 10 22 C 14 14, 19 8, 26 2"/></svg><span class="step-text">Marking it up</span></li>
-    </ol>
-    <p class="aside">Usually 20 to 60 seconds. Keep this page open.</p>
+  <section id="working" class="view" hidden aria-live="polite">
+    <p class="lede">Grading <span id="working-name"></span></p>
+    <p class="status"><span id="status">Reading your document</span><span class="caret" aria-hidden="true"></span></p>
+    <p class="aside">Grading usually takes 20 to 60 seconds. Keep this page open.</p>
   </section>
 
   <!-- 4. result -->
   <section id="result" class="view" hidden>
     <div class="result-head">
-      <h2 class="verdict-line" id="result-heading" tabindex="-1">
-        <span class="sr-only">Grade </span><span class="grade"><span id="result-grade"></span><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M72 10 C 40 -4, 4 12, 7 50 C 10 88, 72 98, 92 60 C 106 30, 86 4, 50 7"/></svg></span><span class="sr-only">. </span>
-        <span class="verdict" id="result-verdict"></span>
-      </h2>
-      <p class="result-name" id="result-title"></p>
+      <p class="lede lede-small" id="result-title"></p>
       <div class="actions">
         <button class="btn" id="download">Download</button>
         <button class="btn btn-quiet" id="copy-comments">Copy comments</button>
@@ -79,14 +71,9 @@
         <button class="btn btn-quiet" id="again">Grade another paper</button>
       </div>
       <p class="aside" id="result-notes"></p>
-      <details class="comments-text">
-        <summary>Read the comments as text</summary>
-        <div id="comments-body"></div>
-      </details>
     </div>
+    <div class="pages" id="pages"></div>
   </section>
-
-  <div class="pages" id="pages" hidden></div>
 
   <footer class="foot">
     <p>Grades are written by Claude and can be wrong.</p>
@@ -102,7 +89,6 @@
   <button type="button" class="viewer-close" id="viewer-close" aria-label="Close">×</button>
   <div class="viewer-pages" id="viewer-pages"></div>
 </div>
-<p class="sr-only" id="announce" aria-live="polite"></p>
 <script type="module" src="app.js"></script>
 </body>
 </html>
