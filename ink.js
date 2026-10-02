@@ -388,6 +388,7 @@ export async function markPage(page, issues, meta) {
   const placed = [], dropped = [];
   for (const p of pending) {
     await new Promise(r => setTimeout(r, 0));           // keep the UI responsive
+    if (!String(p.iss.note || "").trim()) { placed.push(p.iss); continue; }   // a mark with nothing to say
     const fit = layoutNote(ctx, p.iss.note, space, p.tgts[0]);
     const tooFar = fit && fit.d > 380 && (p.iss.priority || 2) >= 2;
     if (!fit || tooFar) { dropped.push(p.iss); continue; }
