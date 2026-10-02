@@ -85,11 +85,11 @@ $("upload-form").addEventListener("submit", async (e) => {
     $("upload-error").hidden = false; return;
   }
   const name = chosen ? chosen.name : "Pasted text";
-  await runGrade({ file: chosen, text: pasted, name, label: chosen ? chosen.name : "your writing" });
+  await runGrade({ file: chosen, text: pasted, name, label: chosen ? chosen.name : "Your writing" });
 });
 
 async function runGrade({ file, text, name, label }) {
-  $("working-name").textContent = label;
+  $("working-name").textContent = label;   // what's being graded; the status line below says what's happening
   show("working");
   const status = (s) => { $("status").textContent = s; };
   try {
@@ -148,7 +148,6 @@ async function showResult(canvases, header, info) {
     btn.setAttribute("aria-label", `View page ${i + 1} full size`);
     btn.addEventListener("click", () => openViewer(i, btn));
     btn.appendChild(img);
-    img.addEventListener("load", syncRhythm);
     box.appendChild(btn);
   });
   $("result-title").textContent = `${header.title}: ${header.grade}`;
@@ -163,21 +162,9 @@ async function showResult(canvases, header, info) {
   const file0 = new File([blobs[0]], `${slug}-graded.png`, { type: "image/png" });
   $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [file0] }));
   show("result");
-  syncRhythm();
   window.scrollTo({ top: 0 });
 }
 
-// keep text after the page images on the ruled lines: the images have arbitrary heights,
-// so pad below them until the next element starts on the same rhythm as the header text.
-const LINE = 32;
-function syncRhythm() {
-  const pages = $("pages"), ref = $("result-title");
-  if (!pages || $("result").hidden) return;
-  pages.style.paddingBottom = "0px";
-  const off = (pages.getBoundingClientRect().bottom - ref.getBoundingClientRect().top) % LINE;
-  pages.style.paddingBottom = `${(LINE - off) % LINE}px`;
-}
-window.addEventListener("resize", syncRhythm);
 
 // ---------- copy comments as plain text ----------
 function commentsAsText() {
