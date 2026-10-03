@@ -120,7 +120,7 @@ $("upload-form").addEventListener("submit", async (e) => {
     $("upload-error").hidden = false; return;
   }
   const name = chosen ? chosen.name : "Pasted text";
-  await runGrade({ file: chosen, text: pasted, name, label: chosen ? chosen.name : "Your writing" });
+  await runGrade({ file: chosen, text: pasted, name, label: chosen ? `Grading ${chosen.name}` : "Grading your pasted text" });
 });
 
 async function runGrade({ file, text, name, label }) {
