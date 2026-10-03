@@ -6,16 +6,16 @@
 Guiding rule: keep the app very simple and easy to understand. Prefer one obvious button over a new screen or setting.
 Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 
-Milestones, in order: **rebrand → measure → safeguards → launch → observe 500 to 1,000 grades → improve grading → SEO from real use → monetize if costs and usage justify it.**
+Milestones, in order: **rebrand → measure → safeguards → launch (with search basics) → observe 500 to 1,000 grades → improve grading → landing pages from real use → monetize if costs and usage justify it.**
 
 ## 1. Finish the rebrand (now)
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
 | 1.1 | [x] | Rename to **Grade this.** | Claude | Done: wordmark, tab title, page credit ("Graded at gradethis.app"), README and screenshots. GradeThis.ai (an AI grading tool for teachers) exists; owner judged it acceptable. |
-| 1.2 | [ ] | Point gradethis.app at Vercel | **[You]** | Vercel → project → Domains → add gradethis.app, set the DNS records it shows. Optional: rename the GitHub repo and Vercel project (auto-deploys keep working). |
-| 1.3 | [ ] | Send the old address to the new one | Claude (after 1.2) | Redirect papergrader-alpha.vercel.app → gradethis.app so every link and share lands on one address. |
-| 1.4 | [ ] | Link previews and search basics | Claude | Social preview image (a graded page) + Open Graph/X tags, so a pasted gradethis.app link shows a picture; canonical URL, favicon, robots.txt, sitemap.xml, a proper title and description. Cheap, and needed before anyone shares the link. |
+| 1.2 | [x] | Point gradethis.app at Vercel | **[You]** | Done: **www.gradethis.app is the main address**; gradethis.app 308-redirects to it (Vercel). Optional: rename the GitHub repo and Vercel project. |
+| 1.3 | [x] | Send the old address to the new one | Claude | Done: papergrader-alpha.vercel.app permanently redirects to www.gradethis.app (`vercel.json`). The passcode has to be typed once on the new address. |
+| 1.4 | [x] | Link previews and search basics | Claude | Done: title "Grade this. – Free AI Essay & Writing Grader, in Red Pen", description, canonical (www), robots meta, Open Graph/X tags with a 1200×630 preview image (`og-image.png`), WebApplication structured data (free, true today; change `offers` when pricing exists), `robots.txt` (blocks only /api/), `sitemap.xml`. |
 | 1.5 | [~] | Test on iPhone Safari with real phone photos | **[You]** test, Claude fixes | Photo of a printed page (HEIC), a skewed shot, a multi-page PDF, paste, Word, and the Share button (card-free: it should send every page). |
 
 ## 2. Measure (before sending any traffic)
@@ -57,12 +57,23 @@ The UI is frozen. Effort goes into how good the marked-up page is.
 | 5.1 | [ ] | Quiet "Was this useful? 👍 👎" | Claude | At the very bottom of the result, not prominent. Sent as an analytics event with the grade and kind of writing. |
 | 5.2 | [ ] | Annotation quality | Claude | Better note placement and fewer collisions, smarter choice of what to mark, more natural handwriting variation, better arrows/brackets/circles, earned check marks, consistent scoring, sharper overall comments. Driven by real papers and the 👍/👎 data. |
 
-## 6. SEO from real use (later)
+## 6. Search
+
+Order: get indexed now (it takes days to weeks anyway) → a little crawlable text on the homepage → one example page → landing pages only for what people actually upload. No mass blog posts, backlink schemes, directories or SEO tools.
+
+**Reality check:** "AI essay grader" and "grade my essay" are crowded with established teacher tools (EssayGrader, CoGrader, GradeWithAI and others) on older domains, so a new site won't rank for those for months, if ever. Realistic early wins: our own name, and longer searches that match what's different ("essay marked up in red pen", "grade my essay like a teacher"). Sharing stays the faster channel.
+
+**Timing with the passcode:** anyone arriving from Google today hits the passcode screen and leaves. Indexing is slow, so start now, but the homepage text (6.4) and landing pages (6.6) should go live with the passcode removal (3.5), not before.
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
-| 6.1 | [ ] | Search Console | **[You]** verify the domain, Claude adds the sitemap | After 1.2. |
-| 6.2 | [ ] | A few landing pages | Claude | Only for what people actually upload (e.g. /resume-grader, /essay-grader, /college-essay-grader, /blog-post-grader). No AI-generated blog. |
+| 6.1 | [ ] | Google Search Console | **[You]** | Add a **Domain** property for gradethis.app (DNS TXT record at your registrar), submit `https://www.gradethis.app/sitemap.xml`, then URL Inspection → Test live URL → Request indexing on the homepage. Data can take about a week to appear. |
+| 6.2 | [x] | Nothing blocks Google | Claude | Done: robots.txt allows crawling, robots meta is index/follow, no noindex headers, one canonical (www) with apex and old address redirecting. Confirm with 6.1's live test. |
+| 6.3 | [x] | Title, description, structured data | Claude | Done in 1.4. Brand first on the page; the tab title says what it is for Google. |
+| 6.4 | [ ] | Short crawlable text below the tool | Claude | About 200 to 400 words under the upload box, small and gray, hidden on the result screen: one line on what it is, How it works (3 steps), What it can grade (essays, college essays, resumes, cover letters, blog posts, reports, memos), Private by design (links the existing note). Must be in the HTML even behind the passcode, so Google sees it. The hero stays as is. Ship with 3.5. |
+| 6.5 | [ ] | One example graded paper | Claude | A **public-domain or made-up** essay (not someone else's copyrighted essay) shown before and after grading, as a real image with alt text. Goes on the homepage section and later on /essay-grader. It's the clearest proof we're not another chat-box grader. |
+| 6.6 | [ ] | Landing pages from data | Claude | Only after PostHog shows what people grade (`doc_type`). Likely first: /essay-grader; then /college-essay-grader, /resume-grader, /writing-grader. Each: what it checks, the example, short FAQ, supported formats, privacy, and the same upload box. Plain static pages (no build step), added to the sitemap. |
+| 6.7 | [ ] | Watch Search Console | **[You]** + Claude | After a few weeks: which searches show us and what gets clicked. That, not guesses, picks the next page. |
 
 ## 7. Cost and money (only once usage justifies it)
 

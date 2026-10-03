@@ -1,6 +1,6 @@
 # Grade this.
 
-[gradethis.app](https://gradethis.app)
+[gradethis.app](https://www.gradethis.app)
 
 **Drop in a document. Get it back graded, in red pen.**
 
@@ -94,6 +94,8 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
    - optional `ANTHROPIC_WORKSPACE_ID`: only if your key isn't scoped to a workspace
    - optional `GRADER_MODEL` (default `claude-sonnet-5-5`)
 3. Deploy. Every push to `main` redeploys.
-4. Add the custom domain (gradethis.app) under the project's Domains settings and set the DNS records Vercel shows. The credit line on every graded page always says gradethis.app.
+4. Add the custom domain under the project's Domains settings: www.gradethis.app is the main address and gradethis.app redirects to it; `vercel.json` also redirects the old papergrader-alpha.vercel.app address. The credit line on every graded page says gradethis.app.
+
+Search basics live in `index.html` (title, description, canonical, Open Graph, structured data), `og-image.png` (link preview), `robots.txt` and `sitemap.xml`.
 
 `samples/` has a made-up memo (PDF and Word) for trying it out. `TODO.md` has the roadmap: launch, measure, then improve the grading.
