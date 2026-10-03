@@ -1,9 +1,11 @@
 // Shared helpers for the API routes.
 import crypto from "node:crypto";
 
+// No APP_PASSCODE set = the app is open to everyone (the launch switch). With one set, it's required.
 export function passcodeOk(given) {
   const expected = process.env.APP_PASSCODE || "";
-  if (!expected || typeof given !== "string") return false;
+  if (!expected) return true;
+  if (typeof given !== "string") return false;
   const a = crypto.createHash("sha256").update(given.trim()).digest();
   const b = crypto.createHash("sha256").update(expected.trim()).digest();
   return crypto.timingSafeEqual(a, b);

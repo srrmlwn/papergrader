@@ -5,7 +5,10 @@ import { track } from "./analytics.js";
 const JSPDF = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
 const $ = (id) => document.getElementById(id);
 const views = ["gate", "upload", "working", "result"];
-const show = (v) => views.forEach(id => { $(id).hidden = id !== v; });
+const show = (v) => {
+  views.forEach(id => { $(id).hidden = id !== v; });
+  $("about").hidden = !(v === "gate" || v === "upload");   // the explainer only sits under the first screens
+};
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -16,8 +19,8 @@ const store = {
 let passcode = store.get("pg-pass") || "";
 let chosen = null;
 let result = null;        // { canvases, blobs, title }
-let pasteCounted = false;
-let gradedThisVisit = 0;   // papers graded since the page loaded  // one document_added per paste, not per keystroke
+let pasteCounted = false;  // one document_added per paste, not per keystroke
+let gradedThisVisit = 0;   // papers graded since the page loaded
 
 // what kind of input this is, for analytics (never the content)
 function inputType(file) {
@@ -357,8 +360,8 @@ $("again").addEventListener("click", () => {
 
 // ---------- start ----------
 (async () => {
-  if (passcode) {
-    try { await checkPass(passcode); show("upload"); return; } catch { store.del("pg-pass"); passcode = ""; }
-  }
+  // with a saved passcode, or none at all when the app is open (no APP_PASSCODE on the server)
+  try { await checkPass(passcode); show("upload"); return; }
+  catch { if (passcode) { store.del("pg-pass"); passcode = ""; } }
   show("gate");
 })();

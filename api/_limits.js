@@ -35,7 +35,7 @@ async function redis(commands) {
 function visitorKey(req) {
   const ip = String(req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || "unknown").split(",")[0].trim();
   // hashed so no raw IP address is ever stored
-  return crypto.createHash("sha256").update(`${ip}|${process.env.APP_PASSCODE || ""}`).digest("hex").slice(0, 24);
+  return crypto.createHash("sha256").update(`${ip}|${process.env.ANTHROPIC_API_KEY || ""}`).digest("hex").slice(0, 24);
 }
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });   // YYYY-MM-DD
 

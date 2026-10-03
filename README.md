@@ -81,7 +81,7 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
 ```
 
 - **Front end:** static HTML, CSS and JavaScript, with no framework and no build step.
-- **Back end:** two Vercel functions. `/api/auth` checks the passcode, and `/api/grade` calls Claude after checking two Redis counters (`api/_limits.js`): grades per visitor per hour, keyed by a hashed IP that expires in an hour, and estimated spend today. Nothing else is stored.
+- **Back end:** two Vercel functions. `/api/auth` checks the passcode (if one is set), and `/api/grade` calls Claude after checking two Redis counters (`api/_limits.js`): grades per visitor per hour, keyed by a hashed IP that expires in an hour, and estimated spend today. Nothing else is stored.
 - **Analytics:** PostHog (`analytics.js`), cookieless and anonymous, with no autocapture or session recording. One small funnel: `document_added → grading_started → grading_completed / grading_failed → download_clicked / share_clicked / copy_clicked → grade_another_clicked`, with input type, page count, time, grade, kind of writing and estimated cost. Never anything from the document. Disabled on localhost.
 - **Cost:** an estimated ~2¢ for a one-page paper. Each grade logs a `grade-cost` line (input type, kind of writing, grade, tokens, US$, time; never document text), the same estimate goes to analytics, and the Anthropic Console has the running total.
 
@@ -89,7 +89,7 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
 
 1. Import this repo as a Vercel project. Framework: Other. No build command.
 2. Set the environment variables:
-   - `APP_PASSCODE`: the passcode people type to use the app
+   - optional `APP_PASSCODE`: when set, people must type it to use the app; delete it to open the app to everyone
    - `ANTHROPIC_API_KEY`: an Anthropic API key, ideally scoped to its own workspace with a monthly spend limit
    - optional `ANTHROPIC_WORKSPACE_ID`: only if your key isn't scoped to a workspace
    - optional `GRADER_MODEL` (default `claude-sonnet-5-5`)

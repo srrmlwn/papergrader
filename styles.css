@@ -195,3 +195,16 @@ html.viewer-open, html.viewer-open body { overflow: hidden; }
 .privacy p { margin: 6px 0 0 22px; }
 .lock { width: 15px; height: 15px; flex: none; fill: currentColor; stroke: currentColor; stroke-width: 1.6; }
 .lock path { fill: none; }
+
+/* about: quiet explainer under the first screens */
+.about { margin-top: calc(var(--line) * 2); padding-top: var(--line); border-top: 1px solid #e3e6eb; color: var(--faint); font-size: 15px; line-height: 1.6; max-width: 62ch; }
+.about[hidden] { display: none; }
+.about h2 { margin: 0 0 8px; font: 700 18px/1.4 var(--typed); color: var(--type); }
+.about h3 { margin: 22px 0 6px; font: 700 15px/1.4 var(--typed); color: var(--type); }
+.about p, .about ol { margin: 0 0 10px; }
+.about ol { padding-left: 1.4em; }
+.about li { margin-bottom: 6px; }
+.about strong { color: var(--type); }
+.about figure { margin: 16px 0 6px; }
+.about img { display: block; width: 100%; height: auto; border: 1px solid #e3e6eb; box-shadow: 0 6px 18px rgba(30, 40, 60, .10); }
+.about figcaption { margin-top: 8px; font-size: 13px; line-height: 1.5; }
