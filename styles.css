@@ -208,3 +208,9 @@ html.viewer-open, html.viewer-open body { overflow: hidden; }
 .about figure { margin: 16px 0 6px; }
 .about img { display: block; width: 100%; height: auto; border: 1px solid #e3e6eb; box-shadow: 0 6px 18px rgba(30, 40, 60, .10); }
 .about figcaption { margin-top: 8px; font-size: 13px; line-height: 1.5; }
+
+.submit-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; }
+.example-link { color: var(--faint); font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
+.example-link:hover { color: var(--type); }
+html { scroll-behavior: smooth; }
+#example { scroll-margin-top: 24px; }

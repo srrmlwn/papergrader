@@ -64,8 +64,8 @@
 
     <form id="upload-form">
       <div class="composer" id="composer">
-        <label class="sr-only" for="paste">Your writing</label>
-        <textarea id="paste" class="paste" rows="6" spellcheck="false" placeholder="Paste your writing here, or drop a file."></textarea>
+        <label class="sr-only" for="paste">Your paper</label>
+        <textarea id="paste" class="paste" rows="6" spellcheck="false" placeholder="Paste your paper here, or drop the file in."></textarea>
         <div class="file-chip" id="file-chip" hidden>
           <span class="file-info"><span class="file-name" id="file-name"></span><span class="file-meta" id="file-meta"></span></span>
           <button type="button" class="file-remove" id="file-remove" aria-label="Remove file">×</button>
@@ -77,7 +77,10 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
+      <div class="submit-row">
+        <button type="submit" class="btn btn-big" id="submit" disabled>Turn it in</button>
+        <a class="example-link" href="#example">See an example ↓</a>
+      </div>
       <p id="upload-error" class="error" role="alert" hidden></p>
     </form>
   </section>
@@ -110,7 +113,7 @@
   <section id="about" class="about" aria-labelledby="about-title">
     <h2 id="about-title">Your writing, graded in red pen</h2>
     <p>A free AI writing grader that hands your document back the way a sharp teacher would: your own pages, in red pen. It circles mistakes, writes corrections above the line, squeezes comments into the margins, and puts the grade and an overall comment at the top.</p>
-    <figure>
+    <figure id="example">
       <img src="example-graded.webp" width="900" height="944" loading="lazy" alt="A one-page office memo marked up in red pen: circled homophones, struck-out words with corrections written above them, margin notes, and a C grade with the teacher's comment at the top">
       <figcaption>A made-up office memo, graded C: four homophone slips, three agreement errors and one 54-word sentence, with credit for its clear rules.</figcaption>
     </figure>
