@@ -17,7 +17,7 @@ It hands your writing back the way a sharp teacher would: the actual page, cover
 ## What it does
 
 1. **You turn in your writing.** Upload a PDF, a Word file, a photo or screenshot of a page, or just paste text. Up to 8 pages.
-2. **It reads it like a teacher.** Claude reads the text, works out what kind of writing it is (essay, work email or memo, resume) and grades it by that standard: grammar and spelling, clarity, structure and logic.
+2. **Claude reads it like a teacher.** It works out what kind of writing it is (essay, work email or memo, resume) and grades it by that standard: grammar and spelling, clarity, structure and logic.
 3. **You get the paper back, marked up.** The marks are drawn onto the page itself, with comments written into the page's own white space.
 4. **You take it with you.** Share the pages straight from your phone, download them (an image for one page, a PDF for several), or copy all the comments as text to fix your draft.
 
