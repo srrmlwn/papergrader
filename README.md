@@ -4,7 +4,7 @@
 
 **Drop in a document. Get it back graded, in red pen.**
 
-Grade this. hands your writing back the way a sharp teacher would: the actual page, covered in hand-drawn red ink. Words are circled, phrases struck through, corrections written above the line and short comments squeezed into the margins. The letter grade and the teacher's overall comment sit together at the top of the first page.
+It hands your writing back the way a sharp teacher would: the actual page, covered in hand-drawn red ink. It circles words, strikes out phrases, writes corrections above the line and squeezes short comments into the margins. The letter grade and the teacher's overall comment sit together at the top of the first page.
 
 <p align="center">
   <img src="docs/screenshots/graded-memo.png" alt="A one-page office memo marked up in red pen: circled homophones, struck-out words with corrections above them, margin notes, and a C grade stamp with the overall comment beside it" width="640">
