@@ -19,12 +19,12 @@ Grade this. hands your writing back the way a sharp teacher would: the actual pa
 1. **You turn in your writing.** Upload a PDF, a Word file, a photo or screenshot of a page, or just paste text. Up to 8 pages.
 2. **It reads it like a teacher.** Claude reads the text, works out what kind of writing it is (essay, work email or memo, resume) and grades it by that standard: grammar and spelling, clarity, structure and logic.
 3. **You get the paper back, marked up.** The marks are drawn onto the page itself, with comments written into the page's own white space.
-4. **You take it with you.** Download it (an image for one page, a PDF for several), or copy all the comments as text to fix your draft.
+4. **You take it with you.** Share the pages straight from your phone, download them (an image for one page, a PDF for several), or copy all the comments as text to fix your draft.
 
 <p align="center">
-  <img src="docs/screenshots/upload-desktop.png" alt="Upload screen: ruled notebook paper, a drop box for a file, a box to paste writing and a Turn it in button" width="48%">
+  <img src="docs/screenshots/upload-desktop.png" alt="Upload screen: the Grade this. wordmark, one box to paste writing or choose a file, and a Turn it in button" width="48%">
   &nbsp;
-  <img src="docs/screenshots/result-desktop.png" alt="Result screen: the grade, Download, Copy comments and Grade another paper buttons, and the marked-up page" width="48%">
+  <img src="docs/screenshots/result-desktop.png" alt="Result screen: Your paper is back, the marked-up page with the grade stamp and overall comment at the top, and Download, Copy comments and Grade another paper in a bar pinned to the bottom" width="48%">
 </p>
 
 Tap any page to read every page full size, scroll through them, then tap outside to close.
@@ -51,7 +51,7 @@ It's built for phones as much as laptops:
 - **It knows what it's reading.** A resume isn't graded like an essay (resume fragments aren't errors), and a work memo is judged on brevity and getting to the point.
 - **Its voice has personality.** Direct, fair and a little dry: *"Myself isn't a fancier me. Reach out to ME."* It's never cruel.
 - **It's shareable by design.** Share sends every graded page as an image, page 1 first: the grade, the verdict and the comment sit together at its top. Every page carries a small credit line so screenshots say where they came from.
-- **It's private by default.** Files are opened in your browser. Only the text is sent to Claude for grading, and nothing is stored.
+- **It's private by default.** Files are opened in your browser. Only the text is sent to Claude for grading, and we don't keep a copy of anything: not your writing, the comments or the grade.
 - **It's simple.** One screen to turn something in, one screen with the result, and no settings.
 
 ---
@@ -81,7 +81,7 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
 ```
 
 - **Front end:** static HTML, CSS and JavaScript, with no framework and no build step.
-- **Back end:** three Vercel functions. `/api/auth` checks the passcode, `/api/grade` calls Claude, and `/api/event` counts shares and downloads.
+- **Back end:** three Vercel functions. `/api/auth` checks the passcode, `/api/grade` calls Claude, and `/api/event` counts shares and downloads (a `share-event` log line with the action and image count, nothing about the document).
 - **Cost:** an estimated ~2¢ for a one-page paper. Each grade logs a `grade-cost` line (tokens and US$, never document text), and the Anthropic Console has the running total.
 
 ### Deploy (Vercel)
@@ -93,5 +93,6 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
    - optional `ANTHROPIC_WORKSPACE_ID`: only if your key isn't scoped to a workspace
    - optional `GRADER_MODEL` (default `claude-sonnet-5-5`)
 3. Deploy. Every push to `main` redeploys.
+4. Add the custom domain (gradethis.app) under the project's Domains settings and set the DNS records Vercel shows. The credit line on every graded page always says gradethis.app.
 
-`samples/` has a made-up memo (PDF and Word) for trying it out. `TODO.md` tracks what's next.
+`samples/` has a made-up memo (PDF and Word) for trying it out. `TODO.md` has the roadmap: launch, measure, then improve the grading.
