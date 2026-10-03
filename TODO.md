@@ -39,7 +39,7 @@ The passcode is today's protection. These are what replace it.
 | 3.2 | [x] | Daily spend ceiling | Claude | Done: each grade adds its estimated cost to today's total (Pacific day); past `DAILY_SPEND_LIMIT_USD` (default $5 ≈ 130 to 250 papers) grading pauses until tomorrow with a clear message, and a `daily-spend-ceiling` line is logged. The Anthropic monthly limit stays as the backstop. Raise the env var in Vercel when traffic justifies it. |
 | 3.3 | [x] | Size limits | | Done: 8 pages, 50,000 characters, server-side. |
 | 3.4 | [x] | Timeouts and errors | Claude | Done: Claude call times out at 170 s with a clear message (504); overloaded (529) reads as busy; retryable errors keep the paper in the box and say so; network drops say "Lost the connection". Failures go to analytics by stage and trigger the hourly PostHog email alert. |
-| 3.5 | [ ] | **Launch decision: remove the passcode** | **[You]** decide | Ready: 2.1, 3.1, 3.2, 3.4, 6.4 and 6.5 are done. To launch, delete `APP_PASSCODE` in Vercel → Settings → Environment Variables and redeploy; the app opens to everyone and skips the passcode screen (put it back to close it again). Then post it and watch the dashboard. |
+| 3.5 | [x] | **Launch: passcode removed** | **[You]** | Done Oct 3, 2026 (10:33 PT): `APP_PASSCODE` deleted; the app is open to everyone. Add it back in Vercel to close it again. Next: share it, watch the dashboard, and wait for 500 to 1,000 real grades before big decisions. |
 
 ## 4. Sharing (revisit with data)
 
