@@ -72,8 +72,8 @@ function reddestStrip(canvases, cardW, cardH) {
   let best = { canvas: canvases[0], y: 0, h: Math.round(canvases[0].width * cardH / cardW), score: -1 };
   for (const cv of canvases.slice(0, 4)) {
     const bandH = Math.min(cv.height, Math.round(cv.width * cardH / cardW));
-    const start = cv.headerBottom || 0;   // skip the name line and grade stamp on page 1
-    const limit = cv.summaryTop ? Math.max(bandH, cv.summaryTop) : cv.height;   // stay above the end comment
+    const start = cv.headerBottom || 0;   // skip page 1's header: the grade and end comment are on the card already
+    const limit = cv.height;
     const scale = 0.25, w = Math.round(cv.width * scale), h = Math.round(cv.height * scale);
     const t = document.createElement("canvas"); t.width = w; t.height = h;
     const tg = t.getContext("2d", { willReadFrequently: true }); tg.drawImage(cv, 0, 0, w, h);

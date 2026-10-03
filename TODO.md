@@ -18,7 +18,7 @@ Status: `[ ]` to do, `[~]` in progress, `[x]` done, `[-]` dropped or deferred.
 | 10 | [ ] | Web links as input | Claude | Server fetch + Readability, typeset like pasted text; block private addresses. |
 | 11 | [x] | Better waiting screen | Claude | Done: rotating teacher lines while the grader works (no fake progress bar), then "Writing in the margins". |
 | 13 | [x] | Count shares and downloads | Claude + **[You]** check | Done: `/api/event` logs a `share-event` line (action + image count, nothing about the document): `share`, `share-cancel`, `share-save` (desktop), `download`. Search Vercel logs for `share-event`. Decide on a share video or links only once these show real use. |
-| 12 | [ ] | End comment on multi-page papers | Claude | Short end note on page 1 too, or a cover note; today it's only on the last page. |
+| 12 | [x] | End comment on multi-page papers | Claude | Done: the verdict and overall comment now sit at the top of page 1, beside the grade stamp (the page grows a little to fit); capped at 2 sentences / ~40 words. Nothing at the end of the last page any more. |
 
 ## Later (not now: no premature optimization)
 - **Cost: fewer, shorter comments.** Cap at 3 to 5 per page, shorter notes, shorter bracket anchors. Est. 20 to 35% cheaper.

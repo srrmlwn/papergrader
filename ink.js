@@ -324,9 +324,22 @@ export async function markPage(page, issues, meta) {
     cy1 = Math.min(src.height, Math.max(...page.words.map(w => w.y + w.h)) + 10);
   }
   const side = page.crop ? MARGIN : 90;
-  const top = (page.crop ? MARGIN : 40) + (meta.index === 0 ? 150 : 40);
+  const W = Math.round(cx1 - cx0 + 2 * side);
+  // page 1 opens with the teacher's header: name line, grade stamp, then the verdict and end
+  // comment beside the stamp. The paper's text starts below it (the band grows to fit).
+  let top = (page.crop ? MARGIN : 40) + (meta.index === 0 ? 150 : 40);
+  let note = null;
+  if (meta.index === 0 && (meta.header.verdict || meta.header.summary)) {
+    const m = document.createElement("canvas").getContext("2d");
+    const colW = W - side - 330;                         // keep clear of the stamp on the right
+    const vLines = meta.header.verdict ? wrap(m, meta.header.verdict, 52, colW) : [];
+    const sLines = meta.header.summary ? wrap(m, meta.header.summary, 38, colW) : [];
+    const y = 128, h = vLines.length * 52 * 1.2 + sLines.length * 38 * LINE_H;
+    note = { vLines, sLines, y };
+    top = Math.max(top, Math.round(y + h + 70));
+  }
   const bottom = page.crop ? MARGIN : 60;
-  const W = Math.round(cx1 - cx0 + 2 * side), H = Math.round(cy1 - cy0 + top + bottom);
+  const H = Math.round(cy1 - cy0 + top + bottom);
 
   const base = document.createElement("canvas"); base.width = W; base.height = H;
   const bctx = base.getContext("2d", { willReadFrequently: true });
@@ -348,6 +361,10 @@ export async function markPage(page, issues, meta) {
     const pts = `-${h.points} pts`;
     ctx.fillText(pts, W - 290 - ctx.measureText(pts).width, 70);
     stamp(ctx, W - 150, 125, h.grade);
+    if (note) {
+      drawLines(ctx, note.vLines, 52, side, note.y);
+      drawLines(ctx, note.sLines, 38, side, note.y + note.vLines.length * 52 * 1.2);
+    }
   } else {
     ctx.font = font(40); ctx.fillStyle = INK; ctx.textBaseline = "top";
     ctx.fillText(`p.${meta.index + 1}`, W - 150, 40);
@@ -409,9 +426,7 @@ export async function markPage(page, issues, meta) {
     placed.push(p.iss);
   }
 
-  // 3) end comment on the last page, in the blank space after the text
-  let out = { base, ink, W, H };
-  if (meta.index === meta.count - 1) out = placeSummary(out, space, words, side, meta.header);
+  const out = { base, ink, W, H };
 
   const canvas = document.createElement("canvas"); canvas.width = out.W; canvas.height = out.H;
   const c = canvas.getContext("2d");
@@ -422,38 +437,9 @@ export async function markPage(page, issues, meta) {
   c.textAlign = "center"; c.textBaseline = "alphabetic";
   c.fillText(`Graded by Paper Grader \u00b7 ${location.host || "papergrader"}`, out.W / 2, out.H - 26);
   c.textAlign = "left";
-  // for the share card's crop: where the end comment starts, and the bottom of the page-1 header
-  canvas.summaryTop = out.summaryTop;
+  // for the share card's crop: the bottom of the page-1 header (grade and end comment)
   canvas.headerBottom = meta.index === 0 ? top - 20 : 0;
   return { canvas, placed, dropped, missing };
-}
-
-function placeSummary({ base, ink, W, H }, space, words, side, h) {
-  const ctx = ink.getContext("2d");
-  const last = words.length ? Math.max(...words.map(w => w.y + w.h)) : 200;
-  const vs = 52, ss = 38, colW = W - 2 * side;
-  const lines = wrap(ctx, h.summary, ss, colW);
-  const blockH = vs * 1.2 + lines.length * ss * LINE_H + 10;
-  space.fillPx(0, 0, side, H); space.fillPx(W - side, 0, W, H); space.fillPx(0, 0, W, last + 30); space.refresh();
-  const c = space.candidates(colW, blockH, [side, last + 60, W - side, last + 80], 1)[0];
-  let x = side, y;
-  if (c && c.d < 200) { x = c.x; y = c.y; }
-  else {                                   // not enough blank paper: extend the sheet
-    const extra = Math.ceil(blockH + 80);
-    const grow = (cv, fill) => {
-      const n = document.createElement("canvas"); n.width = W; n.height = H + extra;
-      const g = n.getContext("2d");
-      if (fill) { g.fillStyle = "#fff"; g.fillRect(0, 0, W, H + extra); }
-      g.drawImage(cv, 0, 0); return n;
-    };
-    base = grow(base, true); ink = grow(ink, false);
-    y = H - 60; H += extra;
-  }
-  const ic = ink.getContext("2d");
-  drawLines(ic, [h.verdict], vs, x, y);
-  const summaryTop = y - 10;
-  drawLines(ic, lines, ss, x, y + vs * 1.2);
-  return { base, ink, W, H, summaryTop };
 }
 
 // Top edge of the content: the first row with real ink across the text column, so titles,

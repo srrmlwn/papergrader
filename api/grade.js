@@ -94,7 +94,7 @@ Header and summary:
 - title: a short name for the document (under 40 characters), used on the "Name:" line.
 - grade: a letter grade from A+ to F. points: points deducted out of 100, consistent with the grade.
 - verdict: 3 to 7 words, the punchy first line of the end comment.
-- summary: 2 or 3 short sentences naming the biggest problems and the best thing about the paper.`;
+- summary: 2 short sentences, 40 words at most, naming the biggest problem and the best thing about the paper. It is written at the top of page 1 next to the grade, so make it stand on its own.`;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return send(res, 405, { error: "Use POST." });

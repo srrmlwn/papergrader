@@ -2,10 +2,10 @@
 
 **Drop in a document. Get it back graded, in red pen.**
 
-Paper Grader hands your writing back the way a sharp teacher would: the actual page, covered in hand-drawn red ink. Words are circled, phrases struck through, corrections written above the line and short comments squeezed into the margins. There's a letter grade at the top and an end note at the bottom.
+Paper Grader hands your writing back the way a sharp teacher would: the actual page, covered in hand-drawn red ink. Words are circled, phrases struck through, corrections written above the line and short comments squeezed into the margins. The letter grade and the teacher's overall comment sit together at the top of the first page.
 
 <p align="center">
-  <img src="docs/screenshots/graded-memo.png" alt="A one-page office memo marked up in red pen: circled homophones, struck-out words with corrections above them, margin notes, a C grade stamp and an end comment" width="640">
+  <img src="docs/screenshots/graded-memo.png" alt="A one-page office memo marked up in red pen: circled homophones, struck-out words with corrections above them, margin notes, and a C grade stamp with the overall comment beside it" width="640">
 </p>
 
 *A one-page office memo (a made-up example), graded C: four homophone slips, three agreement errors and a 54-word run-on sentence. It also gets credit for two good lines.*
@@ -70,7 +70,7 @@ your file or text
    │  mammoth.js for Word; pasted text and Word files are typeset onto clean pages
    ▼
 page text ──► /api/grade ──► Claude (Sonnet 5.5, structured JSON)
-   │             returns: grade, end comment, and per-comment anchor text,
+   │             returns: grade, overall comment, and per-comment anchor text,
    │             mark type (circle, strike, underline, squiggle, bracket, check),
    │             correction and note
    ▼
