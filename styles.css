@@ -103,6 +103,7 @@ input:focus { outline: none; border-bottom-color: #000; }
   min-height: 10em; resize: vertical; border: 0; background: transparent; border-radius: 8px 8px 0 0;
 }
 .paste[hidden] { display: none; }
+.btn[hidden] { display: none; }
 .paste::placeholder { color: #8d94a0; }
 .paste:focus { outline: none; }
 .file-chip {

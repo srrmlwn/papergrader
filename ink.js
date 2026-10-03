@@ -437,8 +437,6 @@ export async function markPage(page, issues, meta) {
   c.textAlign = "center"; c.textBaseline = "alphabetic";
   c.fillText(`Graded by Paper Grader \u00b7 ${location.host || "papergrader"}`, out.W / 2, out.H - 26);
   c.textAlign = "left";
-  // for the share card's crop: the bottom of the page-1 header (grade and end comment)
-  canvas.headerBottom = meta.index === 0 ? top - 20 : 0;
   return { canvas, placed, dropped, missing };
 }
 
@@ -466,12 +464,3 @@ function whiten(ctx, W, H) {                  // scanner-gray / off-white paper 
   ctx.putImageData(img, 0, 0);
 }
 
-// ---------- helpers reused by the share card ----------
-export function drawStamp(ctx, cx, cy, grade, scale = 1) {
-  rand = makeRng(42);
-  ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale);
-  stamp(ctx, 0, 0, grade);
-  ctx.restore();
-}
-export function wrapText(ctx, text, sz, maxw) { return wrap(ctx, text, sz, maxw); }
-export const handFont = font;

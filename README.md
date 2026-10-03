@@ -48,7 +48,7 @@ It's built for phones as much as laptops:
 - **It's honest.** The grader is told to mark only problems it can point to in the text. A good paper gets an A with a few real nitpicks, not a list of invented errors. It also gives credit with check marks when something is done well. If a comment can't be matched to the exact words on the page, it's left off rather than placed on a guess.
 - **It knows what it's reading.** A resume isn't graded like an essay (resume fragments aren't errors), and a work memo is judged on brevity and getting to the point.
 - **Its voice has personality.** Direct, fair and a little dry: *"Myself isn't a fancier me. Reach out to ME."* It's never cruel.
-- **It's shareable by design.** Share makes a post-ready image (the grade, the reddest strip of the paper, the sharpest comment) followed by every graded page, and every page carries a small credit line so screenshots say where they came from.
+- **It's shareable by design.** Share sends every graded page as an image, page 1 first: the grade, the verdict and the comment sit together at its top. Every page carries a small credit line so screenshots say where they came from.
 - **It's private by default.** Files are opened in your browser. Only the text is sent to Claude for grading, and nothing is stored.
 - **It's simple.** One screen to turn something in, one screen with the result, and no settings.
 
