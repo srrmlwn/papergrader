@@ -189,7 +189,6 @@ async function showResult(canvases, header, info) {
     btn.appendChild(img);
     box.appendChild(btn);
   });
-  $("result-grade").textContent = header.grade;
   const notes = [];
   if (info.total > MAX_PAGES || info.truncated) notes.push(info.truncated ? `First ${MAX_PAGES} pages graded` : `First ${MAX_PAGES} of ${info.total} pages graded`);
   if (info.dropped) notes.push(`${info.dropped} minor ${info.dropped === 1 ? "note" : "notes"} left off for space`);

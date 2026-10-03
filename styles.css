@@ -138,9 +138,8 @@ input:focus { outline: none; border-bottom-color: #000; }
 /* results */
 .result-head { margin-bottom: calc(var(--line) / 2); }
 .result-head .aside { font-size: 14px; line-height: 1.4; margin-top: -4px; }
-.result-title { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+.result-title { margin: 0;
   font: 400 20px/1.35 var(--typed); color: var(--type); }
-.result-grade { flex: none; font: 700 72px/1 var(--hand); color: var(--ink); }
 .action-bar {
   position: sticky; bottom: 0; z-index: 5;
   margin: var(--line) -56px 0; padding: 12px 56px calc(12px + env(safe-area-inset-bottom));
@@ -151,7 +150,6 @@ input:focus { outline: none; border-bottom-color: #000; }
 .action-bar .link-btn { margin-left: auto; }
 @media (max-width: 520px) {
   .action-bar { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
-  .result-grade { font-size: 60px; }
 }
 .pages { display: grid; gap: 28px; margin: 0 -24px; }
 @media (max-width: 520px) { .pages { margin: 0 -8px; } }
