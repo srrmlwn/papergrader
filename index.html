@@ -99,6 +99,19 @@
       <p class="aside" id="result-notes"></p>
     </div>
     <div class="pages" id="pages"></div>
+    <div class="feedback" id="feedback">
+      <p class="feedback-q" id="feedback-q">Was this grading useful?
+        <button type="button" class="fb-btn" data-useful="yes" aria-label="Yes, useful">👍</button>
+        <button type="button" class="fb-btn" data-useful="no" aria-label="No, not useful">👎</button>
+      </p>
+      <p class="feedback-why" id="feedback-why" hidden>What was off?
+        <button type="button" class="fb-chip" data-reason="wrong_corrections">Wrong corrections</button>
+        <button type="button" class="fb-chip" data-reason="missed_problems">Missed real problems</button>
+        <button type="button" class="fb-chip" data-reason="marks_misplaced">Marks in the wrong place</button>
+        <button type="button" class="fb-chip" data-reason="grade_unfair">Grade felt off</button>
+      </p>
+      <p class="feedback-thanks" id="feedback-thanks" hidden>Thanks. That helps.</p>
+    </div>
     <div class="action-bar" role="toolbar" aria-label="What to do with your graded paper">
       <div class="action-bar-inner">
         <button class="btn" id="download">Download</button>

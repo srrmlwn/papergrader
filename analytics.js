@@ -19,6 +19,9 @@ if (!LOCAL) {
     capture_pageview: true,
     capture_pageleave: false,
     disable_session_recording: true,
+    enable_heatmaps: false,
+    capture_dead_clicks: false,
+    disable_surveys: true,
     person_profiles: "identified_only",
   });
 }

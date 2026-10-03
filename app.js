@@ -191,7 +191,7 @@ async function runGrade({ file, text, name, label }) {
         for (const x of list) comments.push({ ...x, page: i + 1, status: st, k: order.get(x) ?? 999 });
     }
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
-    current = { header, comments };
+    current = { header, comments, input_type, page_count: pageCount, doc_type: g.docType || "unknown" };
     await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated });
     gradedThisVisit++;
     track("grading_completed", {
@@ -235,6 +235,7 @@ async function showResult(canvases, header, info) {
   $("result-notes").textContent = notes.length ? notes.join(". ") + "." : "";
   const slug = header.title.replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "paper";
   result = { canvases, blobs, slug };
+  resetFeedback();
   show("result");
   window.scrollTo({ top: 0 });
 }
@@ -349,6 +350,25 @@ $("share").addEventListener("click", async () => {
     if (err && err.name !== "AbortError") console.error(err);   // AbortError = the person closed the share sheet
   }
 });
+// Quiet "Was this useful?" under the result. One tap; a thumbs-down offers optional reasons.
+// Sent to analytics with the grade and kind of writing, never the document.
+function resetFeedback() {
+  $("feedback-q").hidden = false; $("feedback-why").hidden = true; $("feedback-thanks").hidden = true;
+}
+function feedbackProps(extra) {
+  return { grade: current.header.grade, doc_type: current.doc_type, input_type: current.input_type, page_count: current.page_count, ...extra };
+}
+document.querySelectorAll(".fb-btn").forEach(b => b.addEventListener("click", () => {
+  const useful = b.dataset.useful === "yes";
+  track("grade_feedback", feedbackProps({ useful }));
+  $("feedback-q").hidden = true;
+  if (useful) $("feedback-thanks").hidden = false; else $("feedback-why").hidden = false;
+}));
+document.querySelectorAll(".fb-chip").forEach(b => b.addEventListener("click", () => {
+  track("grade_feedback_reason", feedbackProps({ reason: b.dataset.reason }));
+  $("feedback-why").hidden = true; $("feedback-thanks").hidden = false;
+}));
+
 $("again").addEventListener("click", () => {
   track("grade_another_clicked", { papers_this_visit: gradedThisVisit });
   current = null; pasteCounted = false;

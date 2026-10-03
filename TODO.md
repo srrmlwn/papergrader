@@ -26,7 +26,7 @@ The number that matters is **papers graded per visitor**, plus **% who grade a s
 |---|---|---|---|---|
 | 2.1 | [x] | Product analytics with PostHog | Claude | Done: `analytics.js`, cookieless (memory only), anonymous, no autocapture or recording, US host (switch `HOST` if the project is EU). Events: `$pageview`, `document_added`, `grading_started`, `grading_completed`, `grading_failed` (with stage), `download_clicked`, `share_clicked` (shared/cancelled/failed), `copy_clicked`, `grade_another_clicked`. Properties: input type, page count, processing time, grade, kind of writing, estimated cost, comments placed/dropped, papers this visit; PostHog adds device and referrer. Never document text. Privacy note updated. Replaced the `share-event` log lines. Caveat: no storage means a returning visitor counts as new, so retention across days isn't measured. |
 | 2.2 | [x] | One dashboard | Claude (via PostHog MCP) | Done: "Grade this – product" (pinned): papers per visit, second-paper rate, time and cost per grade, funnel, daily cost, visits and papers per day, what people grade, how papers come in, failures. Hourly email alert on any failed grade. Ignore retention/WAU/new-vs-returning on the starter dashboards (cookieless = every load is a new visitor). |
-| 2.5 | [ ] | Turn off session replay, console logs and heatmaps in PostHog project settings | **[You]** OK, Claude does it | The app already blocks recording, but the project setting is on by default; replay would capture documents. Defense in depth, matches the privacy note. |
+| 2.5 | [x] | Turn off session replay, console logs and heatmaps | Claude | Done: off in PostHog project settings, and the app also tells PostHog no recording, heatmaps, dead clicks or surveys. |
 | 2.3 | [x] | Fuller cost line per grade | Claude | Done: the grader now also returns the kind of writing (`docType`); `grade-cost` logs input type, kind, grade, tokens, US$, time; the estimate is sent with `grading_completed`. Failures are counted by stage in analytics. |
 | 2.4 | [-] | Vercel Speed Insights | | Skip for now: the page is static and light. Revisit if analytics show slow loads or drop-offs. |
 
@@ -55,7 +55,7 @@ The UI is frozen. Effort goes into how good the marked-up page is.
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
-| 5.1 | [ ] | Quiet "Was this useful? 👍 👎" | Claude | At the very bottom of the result, not prominent. Sent as an analytics event with the grade and kind of writing. |
+| 5.1 | [x] | Quiet "Was this grading useful? 👍 👎" | Claude | Done: under the graded pages. 👎 offers optional one-tap reasons (wrong corrections, missed real problems, marks in the wrong place, grade felt off); no free text, so nothing from the document can leak in. Events `grade_feedback` (useful) and `grade_feedback_reason`, with grade, kind of writing, input type, pages. Review on the dashboard's "Was it useful?" tiles. Caveat: only some people answer, and unhappy ones answer more. |
 | 5.2 | [ ] | Annotation quality | Claude | Better note placement and fewer collisions, smarter choice of what to mark, more natural handwriting variation, better arrows/brackets/circles, earned check marks, consistent scoring, sharper overall comments. Driven by real papers and the 👍/👎 data. |
 
 ## 6. Search
