@@ -1,5 +1,5 @@
 {
-  "name": "paper-grader",
+  "name": "gradethis",
   "private": true,
   "type": "module",
   "engines": { "node": "22.x" }

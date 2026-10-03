@@ -435,7 +435,7 @@ export async function markPage(page, issues, meta) {
   // small gray credit at the foot of every page, so screenshots and downloads say where they came from
   c.font = '400 22px "Courier Prime", "Courier New", monospace'; c.fillStyle = "#9a9ea6";
   c.textAlign = "center"; c.textBaseline = "alphabetic";
-  c.fillText(`Graded by Paper Grader \u00b7 ${location.host || "papergrader"}`, out.W / 2, out.H - 26);
+  c.fillText("Graded at gradethis.app", out.W / 2, out.H - 26);
   c.textAlign = "left";
   return { canvas, placed, dropped, missing };
 }

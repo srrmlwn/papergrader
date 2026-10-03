@@ -1,8 +1,10 @@
-# Paper Grader
+# Grade this.
+
+[gradethis.app](https://gradethis.app)
 
 **Drop in a document. Get it back graded, in red pen.**
 
-Paper Grader hands your writing back the way a sharp teacher would: the actual page, covered in hand-drawn red ink. Words are circled, phrases struck through, corrections written above the line and short comments squeezed into the margins. The letter grade and the teacher's overall comment sit together at the top of the first page.
+Grade this. hands your writing back the way a sharp teacher would: the actual page, covered in hand-drawn red ink. Words are circled, phrases struck through, corrections written above the line and short comments squeezed into the margins. The letter grade and the teacher's overall comment sit together at the top of the first page.
 
 <p align="center">
   <img src="docs/screenshots/graded-memo.png" alt="A one-page office memo marked up in red pen: circled homophones, struck-out words with corrections above them, margin notes, and a C grade stamp with the overall comment beside it" width="640">
@@ -43,7 +45,7 @@ It's built for phones as much as laptops:
 
 ## What makes it different
 
-- **The output is the paper itself, not a report.** Grammar tools give you a sidebar of suggestions, and AI essay graders give you a score and paragraphs of feedback. Paper Grader gives back the document you turned in, marked up by hand. You see every problem where it happens, in a form anyone recognizes at a glance.
+- **The output is the paper itself, not a report.** Grammar tools give you a sidebar of suggestions, and AI essay graders give you a score and paragraphs of feedback. Grade this. gives back the document you turned in, marked up by hand. You see every problem where it happens, in a form anyone recognizes at a glance.
 - **It feels handwritten.** Wobbly circles that overshoot, arrows with a little sag, a handwriting font, notes tucked into gaps between paragraphs and down the margins, exactly where a teacher would squeeze them. No wide comment gutter and no digital-looking boxes.
 - **It's honest.** The grader is told to mark only problems it can point to in the text. A good paper gets an A with a few real nitpicks, not a list of invented errors. It also gives credit with check marks when something is done well. If a comment can't be matched to the exact words on the page, it's left off rather than placed on a guess.
 - **It knows what it's reading.** A resume isn't graded like an essay (resume fragments aren't errors), and a work memo is judged on brevity and getting to the point.
