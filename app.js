@@ -162,7 +162,12 @@ async function runGrade({ file, text, name, label }) {
     const g = await r.json().catch(() => ({}));
     stopLines();
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
-    if (!r.ok) { stage = `server_${r.status}`; throw new Error(g.error || "Grading failed. Try again."); }
+    if (!r.ok) {
+      stage = `server_${r.status}`;
+      const e = new Error(g.error || "Grading failed.");
+      e.retry = r.status === 502 || r.status === 504;   // worth trying again; limits (429, 503) aren't
+      throw e;
+    }
     stage = "drawing";
 
     status("Writing in the margins");
@@ -197,7 +202,10 @@ async function runGrade({ file, text, name, label }) {
     track("grading_failed", { input_type, page_count: pageCount, stage, processing_ms: Date.now() - t0 });
     console.error(err);
     show("upload");
-    $("upload-error").textContent = err.message || "Something went wrong. Try again.";
+    const retry = err.retry || (stage === "grading" && err instanceof TypeError);   // TypeError = network dropped
+    const msg = stage === "grading" && err instanceof TypeError ? "Lost the connection while grading." : (err.message || "Something went wrong.");
+    const hint = !retry ? "" : /try again/i.test(msg) ? " Your paper is still here." : " Your paper is still here: press Turn it in to try again.";
+    $("upload-error").textContent = msg + hint;
     $("upload-error").hidden = false;
   }
 }

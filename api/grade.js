@@ -1,4 +1,5 @@
 import { passcodeOk, readJson, send } from "./_lib.js";
+import { checkLimits, recordSpend } from "./_limits.js";
 
 const MODEL = process.env.GRADER_MODEL || "claude-sonnet-5-5";
 // US$ per million tokens [input, output], from Anthropic's model pricing page (Sep 2026).
@@ -117,6 +118,9 @@ export default async function handler(req, res) {
 
   const user = `File name: ${String(body.name || "document").slice(0, 80)}\n\n<document>\n${doc}\n</document>\n\nGrade this document.`;
 
+  const limited = await checkLimits(req);    // per-visitor hourly cap and daily spend ceiling
+  if (limited) return send(res, limited.status, { error: limited.error });
+
   const started = Date.now();
   let r;
   try {
@@ -136,8 +140,13 @@ export default async function handler(req, res) {
         messages: [{ role: "user", content: user }],
         output_config: { format: { type: "json_schema", schema: SCHEMA } },
       }),
+      signal: AbortSignal.timeout(170000),   // well inside the function's 300 s limit
     });
   } catch (e) {
+    if (e && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      console.error("anthropic timeout", `${Date.now() - started} ms`);
+      return send(res, 504, { error: "The grader took too long on this one. Try again, or try fewer pages." });
+    }
     return send(res, 502, { error: "Couldn't reach the grading service. Try again in a moment." });
   }
 
@@ -151,7 +160,7 @@ export default async function handler(req, res) {
     if (spendLimit) {
       return send(res, 503, { error: "Grading is paused because this month's usage limit has been reached. It will work again when the limit resets or is raised." });
     }
-    const msg = r.status === 429 ? "The grader is busy right now. Try again in a minute."
+    const msg = r.status === 429 || r.status === 529 ? "The grader is busy right now. Try again in a minute."
       : r.status === 401 || r.status === 403 ? "The grader's API key was rejected. The app owner needs to check it."
       : r.status === 400 && /workspace/i.test(detail) ? "The grader's API key needs a workspace. The app owner needs to set ANTHROPIC_WORKSPACE_ID or use a workspace key."
       : "The grader returned an error. Try again.";
@@ -174,6 +183,7 @@ export default async function handler(req, res) {
     model: MODEL, input, docType: result.docType, grade: result.grade, pages: pages.length, chars: total, inTok, outTok,
     usd, ms: Date.now() - started, comments: (result.issues || []).length,
   }));
-  result.costUsd = usd;     // for the analytics event: an estimate, not a bill
+  result.costUsd = usd;
+  await recordSpend(usd);     // for the analytics event: an estimate, not a bill
   return send(res, 200, result);
 }

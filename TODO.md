@@ -35,10 +35,10 @@ The passcode is today's protection. These are what replace it.
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
-| 3.1 | [ ] | Per-visitor rate limit | Claude + **[You]** add a free Redis store (Upstash via Vercel) | For example, 10 grades per hour per IP, with a friendly message. Needs a small store because Vercel functions don't remember anything between calls. |
-| 3.2 | [ ] | Daily spend ceiling | Claude | Stop grading for the day past a set dollar amount, using the same store and the per-grade cost. The Anthropic monthly limit (done) stays as the backstop. Protects against one viral post burning the month in a day. |
+| 3.1 | [x] | Per-visitor rate limit | Claude + **[You]** | Done: Upstash Redis via Vercel; 10 grades per visitor per hour (`RATE_LIMIT_PER_HOUR`), keyed by a hashed IP that expires after an hour. Friendly message, not counted as a retry. Fails open (logs a warning) if Redis is down or missing. |
+| 3.2 | [x] | Daily spend ceiling | Claude | Done: each grade adds its estimated cost to today's total (Pacific day); past `DAILY_SPEND_LIMIT_USD` (default $5 ≈ 130 to 250 papers) grading pauses until tomorrow with a clear message, and a `daily-spend-ceiling` line is logged. The Anthropic monthly limit stays as the backstop. Raise the env var in Vercel when traffic justifies it. |
 | 3.3 | [x] | Size limits | | Done: 8 pages, 50,000 characters, server-side. |
-| 3.4 | [ ] | Timeouts and errors | Claude | Check what people see when Claude is slow, overloaded (529) or times out; clear message and a Try again button, no stuck waiting screen. |
+| 3.4 | [x] | Timeouts and errors | Claude | Done: Claude call times out at 170 s with a clear message (504); overloaded (529) reads as busy; retryable errors keep the paper in the box and say so; network drops say "Lost the connection". Failures go to analytics by stage and trigger the hourly PostHog email alert. |
 | 3.5 | [ ] | **Launch decision: remove the passcode** | **[You]** decide | Only after 2.1, 3.1 and 3.2. Then post it (Reddit, X, friends) and watch the dashboard. |
 
 ## 4. Sharing (revisit with data)

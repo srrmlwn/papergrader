@@ -81,7 +81,7 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
 ```
 
 - **Front end:** static HTML, CSS and JavaScript, with no framework and no build step.
-- **Back end:** two Vercel functions. `/api/auth` checks the passcode, and `/api/grade` calls Claude.
+- **Back end:** two Vercel functions. `/api/auth` checks the passcode, and `/api/grade` calls Claude after checking two Redis counters (`api/_limits.js`): grades per visitor per hour, keyed by a hashed IP that expires in an hour, and estimated spend today. Nothing else is stored.
 - **Analytics:** PostHog (`analytics.js`), cookieless and anonymous, with no autocapture or session recording. One small funnel: `document_added → grading_started → grading_completed / grading_failed → download_clicked / share_clicked / copy_clicked → grade_another_clicked`, with input type, page count, time, grade, kind of writing and estimated cost. Never anything from the document. Disabled on localhost.
 - **Cost:** an estimated ~2¢ for a one-page paper. Each grade logs a `grade-cost` line (input type, kind of writing, grade, tokens, US$, time; never document text), the same estimate goes to analytics, and the Anthropic Console has the running total.
 
@@ -93,6 +93,8 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
    - `ANTHROPIC_API_KEY`: an Anthropic API key, ideally scoped to its own workspace with a monthly spend limit
    - optional `ANTHROPIC_WORKSPACE_ID`: only if your key isn't scoped to a workspace
    - optional `GRADER_MODEL` (default `claude-sonnet-5-5`)
+   - Upstash Redis connected through Vercel Storage (adds `KV_REST_API_URL` / `KV_REST_API_TOKEN` or `UPSTASH_REDIS_REST_*`): turns on the per-visitor hourly limit and the daily spend ceiling. Without it the app still works, unprotected.
+   - optional `RATE_LIMIT_PER_HOUR` (default 10 grades per visitor per hour) and `DAILY_SPEND_LIMIT_USD` (default 5, Pacific-time day)
 3. Deploy. Every push to `main` redeploys.
 4. Add the custom domain under the project's Domains settings: www.gradethis.app is the main address and gradethis.app redirects to it; `vercel.json` also redirects the old papergrader-alpha.vercel.app address. The credit line on every graded page says gradethis.app.
 
