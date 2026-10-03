@@ -67,7 +67,7 @@ Order: get indexed now (it takes days to weeks anyway) → a little crawlable te
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
-| 6.1 | [ ] | Google Search Console | **[You]** | Add a **Domain** property for gradethis.app (DNS TXT record at your registrar), submit `https://www.gradethis.app/sitemap.xml`, then URL Inspection → Test live URL → Request indexing on the homepage. Data can take about a week to appear. |
+| 6.1 | [x] | Google Search Console | **[You]** | Done (Oct 3): verified, sitemap submitted, homepage indexing requested. Add a **Domain** property for gradethis.app (DNS TXT record at your registrar), submit `https://www.gradethis.app/sitemap.xml`, then URL Inspection → Test live URL → Request indexing on the homepage. Data can take about a week to appear. |
 | 6.2 | [x] | Nothing blocks Google | Claude | Done: robots.txt allows crawling, robots meta is index/follow, no noindex headers, one canonical (www) with apex and old address redirecting. Confirm with 6.1's live test. |
 | 6.3 | [x] | Title, description, structured data | Claude | Done in 1.4. Brand first on the page; the tab title says what it is for Google. |
 | 6.4 | [ ] | Short crawlable text below the tool | Claude | About 200 to 400 words under the upload box, small and gray, hidden on the result screen: one line on what it is, How it works (3 steps), What it can grade (essays, college essays, resumes, cover letters, blog posts, reports, memos), Private by design (links the existing note). Must be in the HTML even behind the passcode, so Google sees it. The hero stays as is. Ship with 3.5. |
