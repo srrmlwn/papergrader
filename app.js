@@ -1,5 +1,6 @@
 import { readFile, readText, pageText, MAX_PAGES } from "./readers.js";
 import { markPage } from "./ink.js";
+import { track } from "./analytics.js";
 
 const JSPDF = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
 const $ = (id) => document.getElementById(id);
@@ -15,6 +16,18 @@ const store = {
 let passcode = store.get("pg-pass") || "";
 let chosen = null;
 let result = null;        // { canvases, blobs, title }
+let pasteCounted = false;
+let gradedThisVisit = 0;   // papers graded since the page loaded  // one document_added per paste, not per keystroke
+
+// what kind of input this is, for analytics (never the content)
+function inputType(file) {
+  if (!file) return "paste";
+  if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") return "pdf";
+  if (/\.docx$/i.test(file.name)) return "docx";
+  if (/\.(txt|md)$/i.test(file.name) || file.type === "text/plain") return "text";
+  if (file.type.startsWith("image/") || /\.(png|jpe?g|webp|heic|gif)$/i.test(file.name)) return "image";
+  return "other";
+}
 
 // ---------- passcode gate ----------
 async function checkPass(code) {
@@ -54,6 +67,8 @@ $("paste").addEventListener("input", () => {
     : URL_ONLY.test(v) ? "Links aren't supported yet. Paste the text of the page instead."
     : `${words.toLocaleString()} ${words === 1 ? "word" : "words"}`;
   $("upload-error").hidden = true;
+  if (words && !pasteCounted) { pasteCounted = true; track("document_added", { input_type: "paste" }); }
+  if (!words) pasteCounted = false;
   refreshSubmit();
 });
 function describe(file) {
@@ -76,6 +91,7 @@ function pick(file) {
   $("paste").hidden = true;            // pasted text stays in the box underneath, in case the file is removed
   $("composer-hint").textContent = HINT;
   $("upload-error").hidden = true;
+  track("document_added", { input_type: inputType(file), size_kb: Math.round(file.size / 1024) });
   refreshSubmit();
 }
 $("file").addEventListener("change", (e) => pick(e.target.files[0]));
@@ -123,6 +139,8 @@ $("upload-form").addEventListener("submit", async (e) => {
 });
 
 async function runGrade({ file, text, name, label }) {
+  const t0 = Date.now(), input_type = inputType(file);
+  let stage = "reading", pageCount = 0;
   $("working-name").textContent = label;   // what's being graded; the status line below says what's happening
   show("working");
   const status = (s) => { $("status").textContent = s; };
@@ -131,18 +149,21 @@ async function runGrade({ file, text, name, label }) {
     await document.fonts.load('34px "Caveat"');
     const doc = file ? await readFile(file, status) : await readText(text, status);
     const texts = doc.pages.map(p => pageText(p.words));
+    pageCount = doc.pages.length;
     if (!texts.join("").trim()) throw new Error("No readable text was found. If this is a photo, try a sharper, straighter shot.");
 
-    status("Grading your paper");
+    stage = "grading";
+    track("grading_started", { input_type, page_count: pageCount, total_pages: doc.totalPages });
     stopLines = rotateLines(status);
     const r = await fetch("/api/grade", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ passcode, name, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
+      body: JSON.stringify({ passcode, name, inputType: input_type, pages: texts.map((t, i) => ({ page: i + 1, text: t })) }),
     });
     const g = await r.json().catch(() => ({}));
     stopLines();
     if (r.status === 401) { store.del("pg-pass"); passcode = ""; show("gate"); return; }
-    if (!r.ok) throw new Error(g.error || "Grading failed. Try again.");
+    if (!r.ok) { stage = `server_${r.status}`; throw new Error(g.error || "Grading failed. Try again."); }
+    stage = "drawing";
 
     status("Writing in the margins");
     const header = {
@@ -164,8 +185,16 @@ async function runGrade({ file, text, name, label }) {
     comments.sort((a, b) => a.page - b.page || a.k - b.k);
     current = { header, comments };
     await showResult(canvases, header, { dropped, missing, total: doc.totalPages, truncated: doc.truncated });
+    gradedThisVisit++;
+    track("grading_completed", {
+      input_type, page_count: pageCount, processing_ms: Date.now() - t0, grade: header.grade,
+      doc_type: g.docType || "unknown", estimated_cost_usd: g.costUsd ?? null,
+      comments_placed: comments.filter(c => c.status === "placed").length, comments_dropped: dropped,
+      papers_this_visit: gradedThisVisit,
+    });
   } catch (err) {
     stopLines();
+    track("grading_failed", { input_type, page_count: pageCount, stage, processing_ms: Date.now() - t0 });
     console.error(err);
     show("upload");
     $("upload-error").textContent = err.message || "Something went wrong. Try again.";
@@ -220,6 +249,7 @@ $("copy-comments").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(commentsAsText());
     btn.textContent = "Copied";
+    track("copy_clicked", { comments: current.comments.length });
   } catch {
     btn.textContent = "Couldn't copy";
   }
@@ -264,11 +294,6 @@ function download(blob, name) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
-// Count shares and downloads (action and page count only; nothing about the document).
-function track(action, files) {
-  fetch("/api/event", { method: "POST", keepalive: true, headers: { "content-type": "application/json" },
-    body: JSON.stringify({ passcode, action, files }) }).catch(() => {});
-}
 let jspdfP = null;
 function loadJsPdf() {
   if (!jspdfP) jspdfP = new Promise((res, rej) => {
@@ -280,7 +305,7 @@ function loadJsPdf() {
 }
 // One Download button: a single page saves as an image (easy to share), several pages as a PDF.
 $("download").addEventListener("click", async () => {
-  track("download", result.canvases.length);
+  track("download_clicked", { pages: result.canvases.length, format: result.canvases.length === 1 ? "png" : "pdf" });
   if (result.canvases.length === 1) return download(result.blobs[0], `${result.slug}-graded.png`);
   const btn = $("download"); btn.disabled = true; btn.textContent = "Making PDF";
   try {
@@ -307,14 +332,15 @@ $("share").addEventListener("click", async () => {
   const files = result.blobs.map((b, i) => new File([b], `${result.slug}-graded-p${i + 1}.png`, { type: "image/png" }));
   try {
     await navigator.share({ files, title: "My paper, graded" });
-    track("share", files.length);
+    track("share_clicked", { pages: files.length, outcome: "shared" });
   } catch (err) {
-    track(err && err.name === "AbortError" ? "share-cancel" : "share-fail", files.length);
+    track("share_clicked", { pages: files.length, outcome: err && err.name === "AbortError" ? "cancelled" : "failed" });
     if (err && err.name !== "AbortError") console.error(err);   // AbortError = the person closed the share sheet
   }
 });
 $("again").addEventListener("click", () => {
-  current = null;
+  track("grade_another_clicked", { papers_this_visit: gradedThisVisit });
+  current = null; pasteCounted = false;
   clearFile();
   $("paste").value = ""; $("composer-hint").textContent = HINT;
   $("submit").disabled = true;

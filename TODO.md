@@ -24,9 +24,9 @@ The number that matters is **papers graded per visitor**, plus **% who grade a s
 
 | # | Status | Item | Who | Notes |
 |---|---|---|---|---|
-| 2.1 | [ ] | Product analytics with PostHog | Claude + **[You]** create a free PostHog project | One small event funnel: `page_view → document_added → grading_started → grading_completed → download / share / copy → grade_another`. Properties: input type, page count, processing time, grade, estimated cost, device, referrer. **Never document text.** Run it cookieless, update the privacy note to say so. Replaces the `share-event` log lines (Vercel keeps logs only an hour on Hobby, so they can't answer funnel questions). |
-| 2.2 | [ ] | One dashboard | Claude | Visitors → documents added → grades completed → second grade → share/download; plus papers per visitor, completion rate, average pages, latency, cost per grade. Built in PostHog instead of a custom admin page. |
-| 2.3 | [ ] | Fuller cost line per grade | Claude | Extend the `grade-cost` log (and the PostHog event) with input type, kind of writing, grade, and success/failure with the reason. Tokens, US$, pages and time are already logged. |
+| 2.1 | [x] | Product analytics with PostHog | Claude | Done: `analytics.js`, cookieless (memory only), anonymous, no autocapture or recording, US host (switch `HOST` if the project is EU). Events: `$pageview`, `document_added`, `grading_started`, `grading_completed`, `grading_failed` (with stage), `download_clicked`, `share_clicked` (shared/cancelled/failed), `copy_clicked`, `grade_another_clicked`. Properties: input type, page count, processing time, grade, kind of writing, estimated cost, comments placed/dropped, papers this visit; PostHog adds device and referrer. Never document text. Privacy note updated. Replaced the `share-event` log lines. Caveat: no storage means a returning visitor counts as new, so retention across days isn't measured. |
+| 2.2 | [ ] | One dashboard | **[You]** in PostHog (Claude can list the exact insights) | Visitors → documents added → grades completed → second grade → share/download; plus papers per visitor, completion rate, average pages, latency, cost per grade. Built in PostHog instead of a custom admin page. |
+| 2.3 | [x] | Fuller cost line per grade | Claude | Done: the grader now also returns the kind of writing (`docType`); `grade-cost` logs input type, kind, grade, tokens, US$, time; the estimate is sent with `grading_completed`. Failures are counted by stage in analytics. |
 | 2.4 | [-] | Vercel Speed Insights | | Skip for now: the page is static and light. Revisit if analytics show slow loads or drop-offs. |
 
 ## 3. Safeguards (before removing the passcode)
@@ -91,5 +91,6 @@ Also parked: **web links as input** (server fetch + Readability, typeset like pa
 - Plain paper (no ruled lines or margin line); red only for the teacher and the Turn it in button
 - Footer always at the bottom: "We don't keep a copy of your writing" (opens the privacy note) and "Grades are written by Claude and can be wrong"
 - Passcode gate; monthly Anthropic spend limit with a clear "usage limit reached" message
-- Cost monitoring: Anthropic Console plus a `grade-cost` log line per grade (counts only); share/download counts via `share-event`
+- Cost monitoring: Anthropic Console plus a `grade-cost` log line per grade (counts only)
+- PostHog analytics funnel (cookieless, nothing from the document)
 - Deployed on Vercel from this repo (auto-deploys on push to `main`)

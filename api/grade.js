@@ -25,6 +25,7 @@ const SCHEMA = {
   additionalProperties: false,
   properties: {
     title: { type: "string" },
+    docType: { type: "string", enum: ["essay", "college_essay", "resume", "cover_letter", "work_email_or_memo", "blog_post", "academic", "creative", "other"] },
     grade: { type: "string" },
     points: { type: "integer" },
     verdict: { type: "string" },
@@ -49,7 +50,7 @@ const SCHEMA = {
       },
     },
   },
-  required: ["title", "grade", "points", "verdict", "summary", "issues"],
+  required: ["title", "docType", "grade", "points", "verdict", "summary", "issues"],
 };
 
 const SYSTEM = `You grade documents the way a sharp, honest teacher does with a red pen. Your voice is direct and fair, with a little dry wit: criticism is specific, credit is given where it is earned, and you are never cruel. Your output is drawn by hand onto the page: circles, underlines, strikethroughs and short margin notes.
@@ -92,6 +93,7 @@ Volume and priority:
 
 Header and summary:
 - title: a short name for the document (under 40 characters), used on the "Name:" line.
+- docType: what kind of writing this is (the same judgment you used to pick the grading standard).
 - grade: a letter grade from A+ to F. points: points deducted out of 100, consistent with the grade.
 - verdict: 3 to 7 words, the punchy first line of the end comment.
 - summary: 2 short sentences, 40 words at most, naming the biggest problem and the best thing about the paper. It is written at the top of page 1 next to the grade, so make it stand on its own.`;
@@ -166,10 +168,12 @@ export default async function handler(req, res) {
   // One line per grade for cost spot checks: counts only, never document text.
   const [pin, pout] = PRICES[MODEL] || [0, 0];
   const inTok = data.usage?.input_tokens || 0, outTok = data.usage?.output_tokens || 0;
+  const usd = Math.round(((inTok * pin + outTok * pout) / 1e6) * 10000) / 10000;
+  const input = ["pdf", "docx", "image", "text", "paste"].includes(body.inputType) ? body.inputType : "unknown";
   console.log("grade-cost " + JSON.stringify({
-    model: MODEL, pages: pages.length, chars: total, inTok, outTok,
-    usd: Math.round(((inTok * pin + outTok * pout) / 1e6) * 10000) / 10000,
-    ms: Date.now() - started, comments: (result.issues || []).length,
+    model: MODEL, input, docType: result.docType, grade: result.grade, pages: pages.length, chars: total, inTok, outTok,
+    usd, ms: Date.now() - started, comments: (result.issues || []).length,
   }));
+  result.costUsd = usd;     // for the analytics event: an estimate, not a bill
   return send(res, 200, result);
 }

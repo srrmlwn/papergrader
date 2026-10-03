@@ -81,8 +81,9 @@ note, routes arrows around the text, and drops minor notes rather than shrinking
 ```
 
 - **Front end:** static HTML, CSS and JavaScript, with no framework and no build step.
-- **Back end:** three Vercel functions. `/api/auth` checks the passcode, `/api/grade` calls Claude, and `/api/event` counts shares and downloads (a `share-event` log line with the action and image count, nothing about the document).
-- **Cost:** an estimated ~2¢ for a one-page paper. Each grade logs a `grade-cost` line (tokens and US$, never document text), and the Anthropic Console has the running total.
+- **Back end:** two Vercel functions. `/api/auth` checks the passcode, and `/api/grade` calls Claude.
+- **Analytics:** PostHog (`analytics.js`), cookieless and anonymous, with no autocapture or session recording. One small funnel: `document_added → grading_started → grading_completed / grading_failed → download_clicked / share_clicked / copy_clicked → grade_another_clicked`, with input type, page count, time, grade, kind of writing and estimated cost. Never anything from the document. Disabled on localhost.
+- **Cost:** an estimated ~2¢ for a one-page paper. Each grade logs a `grade-cost` line (input type, kind of writing, grade, tokens, US$, time; never document text), the same estimate goes to analytics, and the Anthropic Console has the running total.
 
 ### Deploy (Vercel)
 
